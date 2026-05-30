@@ -114,7 +114,8 @@ class ConsoleApp:
             print("Сейчас нет активных сделок.")
 
     def _resolve_current_deal(self, accept: bool):
-        success, message = self.game.deal_system.resolve_deal(self.game.state, accept)
+        pressure = self.game.get_effective_chaos_pressure()
+        success, message = self.game.deal_system.resolve_deal(self.game.state, accept, chaos_pressure=pressure)
         print(message)
         self._print_status()
 
@@ -260,8 +261,9 @@ class ConsoleApp:
         now = datetime.now(timezone.utc)
 
         print("\n" + "=" * 50)
-        pressure = self._get_ratysurd_pressure_text(state.ratysurd_level)
-        print(f"RATYSURD LEVEL: {state.ratysurd_level}   [{pressure}]")
+        pressure = self.game.get_effective_chaos_pressure()
+        pressure_text = self._get_ratysurd_pressure_text(state.ratysurd_level)
+        print(f"RATYSURD LEVEL: {state.ratysurd_level}   [{pressure_text}]  (x{pressure:.2f})")
         print("-" * 50)
         print(f"Kloneta: {state.kloneta}/5")
         print(f"Bizneta: {state.bizneta:,.2f}")

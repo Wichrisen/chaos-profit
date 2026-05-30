@@ -74,9 +74,10 @@ class DealSystem:
 
         return False
 
-    def resolve_deal(self, state: PlayerState, accept: bool) -> Tuple[bool, str]:
+    def resolve_deal(self, state: PlayerState, accept: bool, chaos_pressure: float = 1.0) -> Tuple[bool, str]:
         """
         Player decides to accept or refuse the current deal.
+        chaos_pressure amplifies negative effects from Ratysurd.
         Returns (success: bool, message: str)
         """
         if self.current_deal is None:
@@ -109,11 +110,8 @@ class DealSystem:
             return True, f"Успех! {deal_type} сделка принесла +{reward_bizneta} Бизнет и +{reward_clients} клиентов."
 
         else:
-            # Failure → apply negative effect
+            # Failure → apply negative effect, amplified by current chaos pressure
             deal_type = "Тёмная" if deal.is_dark else "Обычная"
-
-            # Determine effect strength — scales with Ratysurd (especially after level 7)
-            ratysurd = state.ratysurd_level
 
             if deal.is_dark:
                 base_strength = random.choice([-0.50, -0.65, -0.75])
@@ -122,13 +120,9 @@ class DealSystem:
                 base_strength = random.choice([-0.25, -0.40, -0.50])
                 is_permanent = random.random() < 0.12
 
-            # Scaling: after level 6 the danger grows noticeably
-            if ratysurd > 6:
-                scaling = 1.0 + (ratysurd - 6) * 0.08   # +8% strength per level after 6
-                base_strength *= scaling
-
-            # Clamp so it doesn't become completely ridiculous in prototype
-            strength = max(base_strength, -0.92)  # max ~92% penalty for now
+            # Apply global Ratysurd pressure
+            strength = base_strength * chaos_pressure
+            strength = max(strength, -0.95)
 
             effect = Effect(
                 effect_id="deal_failure",

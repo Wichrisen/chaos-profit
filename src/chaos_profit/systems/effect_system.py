@@ -19,10 +19,10 @@ class EffectSystem:
     def __init__(self):
         pass
 
-    def get_effective_client_gain_per_minute(self, business: Business) -> float:
+    def get_effective_client_gain_per_minute(self, business: Business, chaos_pressure: float = 1.0) -> float:
         """
         Returns the final client gain speed for a business after all active effects.
-        Currently only supports multiplicative effects on client gain.
+        Negative effects are amplified by current chaos_pressure.
         """
         base = business.base_client_gain_per_minute
 
@@ -31,9 +31,13 @@ class EffectSystem:
 
         multiplier = 1.0
         for effect in business.effects:
-            # For now we treat all effects as multiplicative on client gain speed.
-            # In the future we can expand with target + modifier_type.
-            multiplier *= (1.0 + effect.strength)
+            strength = effect.strength
+
+            # Only negative effects (debuffs) are made worse by high Ratysurd
+            if strength < 0:
+                strength *= chaos_pressure
+
+            multiplier *= (1.0 + strength)
 
         return base * multiplier
 

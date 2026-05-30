@@ -154,7 +154,11 @@ class SaveSystem:
         """
         print(f"[SaveSystem] Applying offline progress for {seconds_passed:.0f} seconds...")
 
+        # Calculate pressure at the time of loading (simple approximation)
+        # For better accuracy we could store historical pressure, but this is fine for MVP
+        pressure = 1.0 + max(0, (state.ratysurd_level - 3) * 0.09)  # rough approximation
+
         # Use the same time system as the live game for consistency
-        self.time_system.apply_time(state, seconds_passed)
+        self.time_system.apply_time(state, seconds_passed, chaos_pressure=pressure)
 
         return state

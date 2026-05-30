@@ -62,8 +62,11 @@ class Game:
 
         print(f"[Game] Advancing time by {seconds:.0f} seconds...")
 
+        # Get current pressure (affected by Chaos Suppression potion)
+        pressure = self.get_effective_chaos_pressure()
+
         # Delegate all time-based logic to TimeSystem
-        self.time_system.apply_time(self.state, seconds)
+        self.time_system.apply_time(self.state, seconds, chaos_pressure=pressure)
 
         # Check for new deals
         self.deal_system.update(self.state, seconds)
@@ -120,6 +123,35 @@ class Game:
         if not self.state.chaos_suppression_until:
             return False
         return datetime.now(timezone.utc) < self.state.chaos_suppression_until
+
+    def get_chaos_pressure_multiplier(self) -> float:
+        """
+        Returns how much 'harder' the game currently is due to Ratysurd.
+        This is a global multiplier applied to negative effect strength.
+        Tuned for MVP feel: noticeable growth after level 6-7.
+        """
+        level = self.state.ratysurd_level
+
+        if level <= 3:
+            return 1.0
+        elif level <= 6:
+            return 1.0 + (level - 3) * 0.08   # slow ramp
+        else:
+            # Stronger growth after the "danger zone" starts
+            return 1.24 + (level - 6) * 0.12
+
+    def get_effective_chaos_pressure(self) -> float:
+        """
+        The actual pressure the player is feeling right now.
+        If Chaos Suppression potion is active, pressure is heavily reduced.
+        """
+        base = self.get_chaos_pressure_multiplier()
+
+        if self.has_active_chaos_suppression():
+            # Suppression makes high Ratysurd feel much more manageable
+            return max(1.0, base * 0.45)
+
+        return base
 
     def spin_slot(self) -> Optional[SpinResult]:
         """Spin the slot machine. Returns SpinResult or None if not enough Kloneta."""

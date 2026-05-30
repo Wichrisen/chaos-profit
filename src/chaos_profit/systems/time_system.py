@@ -20,17 +20,17 @@ class TimeSystem:
     def __init__(self, effect_system):
         self.effect_system = effect_system
 
-    def apply_time(self, state: PlayerState, seconds: float) -> None:
+    def apply_time(self, state: PlayerState, seconds: float, chaos_pressure: float = 1.0) -> None:
         """
         Apply all time-based mechanics for the given number of seconds.
-        This method is idempotent and safe to call with any positive number.
+        chaos_pressure amplifies negative effects.
         """
         if seconds <= 0:
             return
 
         self._apply_kloneta_regen(state, seconds)
-        self._apply_bizneta_income(state, seconds)
-        self._apply_client_changes(state, seconds)
+        self._apply_bizneta_income(state, seconds, chaos_pressure=chaos_pressure)
+        self._apply_client_changes(state, seconds, chaos_pressure=chaos_pressure)
 
         # Always process effect expirations
         self.effect_system.process_time_effects(state, seconds)
@@ -61,8 +61,8 @@ class TimeSystem:
             used_time = gained * REGEN_INTERVAL
             state.kloneta_last_regen_at += timedelta(seconds=used_time)
 
-    def _apply_bizneta_income(self, state: PlayerState, seconds: float) -> None:
-        """Income now comes primarily from clients."""
+    def _apply_bizneta_income(self, state: PlayerState, seconds: float, chaos_pressure: float = 1.0) -> None:
+        """Income now comes primarily from clients (amplified by current chaos pressure on effects)."""
         if not state.businesses:
             return
 
@@ -73,12 +73,10 @@ class TimeSystem:
             if business.clients <= 0:
                 continue
 
-            # Get how much the effects are currently multiplying client-related stats
-            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business)
+            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business, chaos_pressure=chaos_pressure)
             base_gain = business.base_client_gain_per_minute or 1.0
             client_multiplier = effective_gain / base_gain if base_gain > 0 else 1.0
 
-            # Bizneta income = clients * rate_per_client * effect_multiplier
             income = (
                 business.clients
                 * business.bizneta_per_client_per_minute
@@ -89,9 +87,8 @@ class TimeSystem:
 
         if total_income > 0:
             state.bizneta += total_income
-            # We can print it from Game level if we want visibility
 
-    def _apply_client_changes(self, state: PlayerState, seconds: float) -> None:
+    def _apply_client_changes(self, state: PlayerState, seconds: float, chaos_pressure: float = 1.0) -> None:
         if not state.businesses:
             return
 
@@ -99,7 +96,7 @@ class TimeSystem:
         total_change = 0.0
 
         for business in state.businesses.values():
-            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business)
+            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business, chaos_pressure=chaos_pressure)
             delta = effective_gain * minutes
 
             business.clients += delta
@@ -107,6 +104,3 @@ class TimeSystem:
 
             if business.clients < 0:
                 business.clients = 0.0
-
-        # Note: We don't print here because this system is used both live and offline.
-        # Logging is done at a higher level (Game).
