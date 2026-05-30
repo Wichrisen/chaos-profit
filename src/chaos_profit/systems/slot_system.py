@@ -102,36 +102,39 @@ class SlotSystem:
 
         # === Rolling animation changes personality with Ratysurd ===
         ratysurd = state.ratysurd_level
+        is_very_high = ratysurd >= 12
         is_high_chaos = ratysurd >= 10
 
-        if is_high_chaos:
+        if is_very_high:
+            print("\n◉◉◉  REALITY IS FRACTURING...  ◉◉◉", end=" ", flush=True)
+        elif is_high_chaos:
             print("\n🌪️  The reels twist and scream...", end=" ", flush=True)
         else:
             print("\n🎰  Spinning the reels...", end=" ", flush=True)
 
-        # Stage 1
-        for _ in range(7):
+        # Stage 1 — more erratic at high chaos
+        for _ in range(8 if is_very_high else 7):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.03 if is_high_chaos else 0.04)
+            time.sleep(0.025 if is_very_high else 0.03 if is_high_chaos else 0.04)
 
         # Stage 2
-        for _ in range(6):
+        for _ in range(7 if is_very_high else 6):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.07 if is_high_chaos else 0.085)
+            time.sleep(0.06 if is_very_high else 0.07 if is_high_chaos else 0.085)
 
-        # Stage 3 — final tension
-        for _ in range(4):
+        # Stage 3 — final tension (much slower and heavier at high chaos)
+        for _ in range(5 if is_very_high else 4):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.18 if is_high_chaos else 0.22)
+            time.sleep(0.25 if is_very_high else 0.18 if is_high_chaos else 0.22)
 
         print("\r", end="")
 
@@ -245,50 +248,57 @@ class SlotSystem:
                 state.chaos_suppression_potions += 1
                 return SpinResult(r1, r2, r3, "🌪️🌪️🌪️ INSANE! CHAOS SUPPRESSION POTION! 🌪️🌪️🌪️", is_rare=True)
 
-        # === Corrupted (high Ratysurd only) symbols ===
+        # === Corrupted / Twisted outcomes (high Ratysurd only) ===
         if any(x in (r1, r2, r3) for x in ["cursed_bizneta", "cursed_clients", "cursed_potion"]):
-            # Big reward but with a price
+            roll = random.random()
+
             if "cursed_bizneta" in (r1, r2, r3):
-                gain = random.randint(450, 850)
+                gain = random.randint(520, 980)
                 state.bizneta += gain
-                # Apply a negative effect to a random business as the "price"
-                if state.businesses:
-                    target = random.choice(list(state.businesses.values()))
-                    curse = Effect(
-                        effect_id="slot_curse",
-                        strength=random.choice([-0.35, -0.50]),
-                        is_permanent=False,
-                        applied_at=datetime.now(timezone.utc),
-                        expires_at=datetime.now(timezone.utc) + timedelta(minutes=random.randint(12, 25))
-                    )
-                    target.effects.append(curse)
-                return SpinResult(r1, r2, r3, f"Twisted fortune! +{gain} Bizneta... but something feels wrong.", bizneta_gained=gain)
+                if state.businesses and roll < 0.65:
+                    # Stronger version: apply to multiple businesses
+                    affected = random.sample(list(state.businesses.values()), min(2, len(state.businesses)))
+                    for target in affected:
+                        curse = Effect(
+                            effect_id="slot_curse",
+                            strength=random.choice([-0.45, -0.60]),
+                            is_permanent=False,
+                            applied_at=datetime.now(timezone.utc),
+                            expires_at=datetime.now(timezone.utc) + timedelta(minutes=random.randint(18, 30))
+                        )
+                        target.effects.append(curse)
+                    return SpinResult(r1, r2, r3, f"Twisted fortune! +{gain} Bizneta... but the chaos touched several of your businesses.", bizneta_gained=gain)
+                else:
+                    loss = random.randint(200, 380)
+                    state.bizneta = max(0, state.bizneta - loss)
+                    return SpinResult(r1, r2, r3, f"Twisted fortune! +{gain} Bizneta... but you lost {loss} in the process.", bizneta_gained=gain)
 
             if "cursed_clients" in (r1, r2, r3):
-                gain = random.randint(18, 32)
+                gain = random.randint(22, 38)
                 if state.businesses:
                     target = random.choice(list(state.businesses.values()))
                     target.clients += gain
-                # Price: lose some Kloneta
                 loss = random.randint(1, 2)
                 state.kloneta = max(0, state.kloneta - loss)
                 return SpinResult(r1, r2, r3, f"Corrupted clients! +{gain} clients... but you lost {loss} Kloneta.", clients_gained=gain)
 
             if "cursed_potion" in (r1, r2, r3):
-                # Get a good potion but also a negative effect somewhere
                 pot = random.choice(["10min", "30min"])
                 state.regular_potions[pot] = state.regular_potions.get(pot, 0) + 1
                 if state.businesses:
-                    target = random.choice(list(state.businesses.values()))
-                    curse = Effect(
-                        effect_id="slot_curse",
-                        strength=-0.40,
-                        is_permanent=False,
-                        applied_at=datetime.now(timezone.utc),
-                        expires_at=datetime.now(timezone.utc) + timedelta(minutes=20)
-                    )
-                    target.effects.append(curse)
-                return SpinResult(r1, r2, r3, f"Twisted potion... Got a {pot} potion, but chaos touched one of your businesses.", is_rare=True)
+                    affected = random.sample(list(state.businesses.values()), min(2, len(state.businesses)))
+                    for target in affected:
+                        curse = Effect(
+                            effect_id="slot_curse",
+                            strength=-0.50,
+                            is_permanent=False,
+                            applied_at=datetime.now(timezone.utc),
+                            expires_at=datetime.now(timezone.utc) + timedelta(minutes=25)
+                        )
+                        target.effects.append(curse)
+                    return SpinResult(r1, r2, r3, f"Twisted potion... Got a {pot} potion, but chaos touched several of your businesses.", is_rare=True)
+                else:
+                    return SpinResult(r1, r2, r3, f"Twisted potion... Got a {pot} potion. Something feels deeply off.", is_rare=True)
 
         # === Regular potion drops ===
         potion_map = {

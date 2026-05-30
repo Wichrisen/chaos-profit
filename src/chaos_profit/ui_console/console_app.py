@@ -309,29 +309,34 @@ class ConsoleApp:
             return
 
         # The SlotSystem prints the reels + main message with appropriate drama.
-        # We add one final flavorful reaction line + visual framing.
+        # High-chaos results get much more intense framing.
+        is_high_chaos = self.game.state.ratysurd_level >= 10
+        is_big = result.business_gained or result.is_rare or ((result.bizneta_gained or 0) + (result.clients_gained or 0) >= 35)
+
         if "CHAOTIC SPIN" in result.message or "cursed" in result.message.lower() or "twisted" in result.message.lower():
-            print("▓" * 56)
-            print("   → The chaos itself reached into the reels.")
-            print("▓" * 56)
+            print("▓" * 58)
+            print("   → The chaos itself reached into the reels. This spin was wrong.")
+            print("▓" * 58)
         elif result.business_gained or result.is_rare:
-            print("═" * 50)
+            border = "◆" * 52 if is_high_chaos else "★" * 50
+            print(border)
             if result.business_gained:
                 print("   → A new business has joined your empire. This changes things.")
             else:
                 print("   → This one could shift the entire run.")
-            print("═" * 50)
-        elif (result.bizneta_gained or 0) + (result.clients_gained or 0) >= 35:
-            print("─" * 50)
+            print(border)
+        elif is_big:
+            border = "▣" * 52 if is_high_chaos else "─" * 50
+            print(border)
             print("   → Very nice spin. That felt good.")
-            print("─" * 50)
+            print(border)
         elif result.bizneta_gained or result.clients_gained:
             print("   → It adds up.")
         else:
-            if self.game.state.ratysurd_level >= 10:
-                print("   → The chaos is eating spins today...")
-            elif self.game.state.ratysurd_level >= 7:
-                print("   → Cold reels. Pressure is rising.")
+            if self.game.state.ratysurd_level >= 11:
+                print("   → The chaos devoured this spin completely...")
+            elif self.game.state.ratysurd_level >= 8:
+                print("   → Cold, empty reels. The pressure is suffocating.")
             else:
                 print("   → Blank. It happens.")
 
