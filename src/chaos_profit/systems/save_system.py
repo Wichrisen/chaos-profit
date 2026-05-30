@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..core.models import PlayerState, Business, Effect
+from .time_system import TimeSystem
+from .effect_system import EffectSystem
 
 
 SAVE_DIR = Path("saves")
@@ -24,6 +26,8 @@ class SaveSystem:
     def __init__(self, save_path: Path = SAVE_FILE):
         self.save_path = save_path
         self.save_path.parent.mkdir(parents=True, exist_ok=True)
+        self.effect_system = EffectSystem()
+        self.time_system = TimeSystem(self.effect_system)
 
     def save(self, state: PlayerState) -> None:
         """Save current state to disk (atomic write recommended in future)."""
@@ -146,12 +150,9 @@ class SaveSystem:
         Apply all time-based systems while the player was away.
         This is one of the most important functions in the game.
         """
-        # TODO: Implement proper offline logic:
-        # - Kloneta regen
-        # - Bizneta income from businesses (with effects)
-        # - Client gain/loss due to effects
-        # - Temporary effect expiration
+        print(f"[SaveSystem] Applying offline progress for {seconds_passed:.0f} seconds...")
 
-        # Placeholder for now
-        print(f"[SaveSystem] Offline time passed: {seconds_passed:.0f} seconds (logic not implemented yet)")
+        # Use the same time system as the live game for consistency
+        self.time_system.apply_time(state, seconds_passed)
+
         return state

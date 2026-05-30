@@ -55,20 +55,39 @@ def main():
     print(f"\nTest business effective client gain: {effective_gain:.2f} / min (base was 20.0)")
     print(f"Starting clients on test business: {test_business.clients:.2f}")
 
-    # Demonstrate time advancement + effect expiration
-    print("\n--- Time Advancement Demo ---")
-    game.advance_time(45)           # 45 seconds
-    game.advance_time(600)          # 10 minutes
-    game.advance_time(25 * 60)      # 25 minutes
+    # Demonstrate live time advancement with effects
+    print("\n--- Live Time Advancement Demo ---")
+    game.advance_time(45)
+    game.advance_time(600)
+    game.advance_time(1500)
 
-    # Show final state after time passed
     print(f"\nFinal clients on test business: {test_business.clients:.2f}")
     remaining_effects = len(test_business.effects)
-    print(f"Effects remaining on test business: {remaining_effects}")
+    print(f"Effects remaining: {remaining_effects}")
 
     # Trigger manual save
     game.save()
     print("\n[Manual save triggered]")
+
+    # === Offline Progress Simulation ===
+    print("\n--- Offline Progress Simulation ---")
+    # Simulate the player being away for 2 hours
+    offline_seconds = 2 * 60 * 60
+    print(f"Simulating {offline_seconds / 3600:.1f} hours offline...")
+
+    # Create a fresh Game instance to simulate loading after being away
+    offline_game = Game()
+    offline_game.advance_time(offline_seconds)  # This will trigger offline logic via SaveSystem on next load in real usage
+
+    # For demo purposes, directly apply via SaveSystem
+    # (in real game this happens automatically on load)
+    saved_state = game.state
+    # We manually apply here for demo visibility
+    from src.chaos_profit.systems.save_system import SaveSystem
+    temp_save = SaveSystem()
+    temp_save._apply_offline_progress(saved_state, offline_seconds)
+
+    print(f"After offline: Bizneta = {saved_state.bizneta:.2f}, Kloneta = {saved_state.kloneta}")
 
     # Simulate shutdown
     game.shutdown()
