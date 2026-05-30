@@ -160,16 +160,32 @@ class ConsoleApp:
         print(f"Bizneta: {state.bizneta:,.2f}")
         print(f"Last played: {state.last_played_at.strftime('%Y-%m-%d %H:%M:%S')} UTC")
         print(f"Time since last action: {(now - state.last_played_at).total_seconds() / 60:.1f} min")
+
+        # Show active global suppression
+        if state.chaos_suppression_until and now < state.chaos_suppression_until:
+            remaining = (state.chaos_suppression_until - now).total_seconds() / 60
+            print(f"*** CHAOS SUPPRESSION ACTIVE: {remaining:.1f} min left ***")
         print("-" * 50)
 
         if state.businesses:
             print("BUSINESSES:")
             for niche_id, biz in state.businesses.items():
                 effective_gain = self.game.effect_system.get_effective_client_gain_per_minute(biz)
-                effects_str = ""
+                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min")
+
                 if biz.effects:
-                    effects_str = f"  | Effects: {len(biz.effects)} active"
-                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min{effects_str}")
+                    print("      Active effects:")
+                    for eff in biz.effects:
+                        strength_pct = int(eff.strength * 100)
+                        if eff.is_permanent:
+                            time_str = "permanent"
+                        else:
+                            if eff.expires_at:
+                                remaining = (eff.expires_at - now).total_seconds() / 60
+                                time_str = f"{max(0, remaining):.1f} min left"
+                            else:
+                                time_str = "temporary"
+                        print(f"        - {eff.effect_id}: {strength_pct:+d}% to clients ({time_str})")
         else:
             print("No businesses owned yet.")
 

@@ -38,13 +38,12 @@ class DealSystem:
             return False  # Already have an active deal
 
         # Very rough timing for the prototype
-        # Normal deals: roughly every 1-3 minutes of game time
-        # Dark deals: much rarer
+        # We deliberately make deals quite frequent here so the player can test the effect/potion loop easily.
         time_since_last = (datetime.now(timezone.utc) - self.last_deal_time).total_seconds()
 
-        # For prototype: make deals appear more frequently so it's fun to test
-        normal_interval = random.randint(40, 90)   # seconds (faster for testing)
-        dark_interval = random.randint(300, 600)   # 5-10 minutes
+        # Prototype tuning: deals appear often for testing
+        normal_interval = random.randint(25, 55)   # seconds (very frequent for dev testing)
+        dark_interval = random.randint(120, 240)   # 2-4 minutes
 
         if time_since_last > normal_interval:
             # Decide if it's a dark deal (rare)
@@ -113,13 +112,13 @@ class DealSystem:
             # Failure → apply negative effect
             deal_type = "Тёмная" if deal.is_dark else "Обычная"
 
-            # Determine effect strength
+            # Determine effect strength (tuned stronger for prototype testing)
             if deal.is_dark:
-                strength = random.choice([-0.45, -0.60, -0.75])  # Medium to strong
-                is_permanent = random.random() < 0.4  # 40% chance of стойкий effect on dark deal failure
+                strength = random.choice([-0.55, -0.70, -0.85])  # Strong
+                is_permanent = random.random() < 0.45
             else:
-                strength = random.choice([-0.20, -0.35])  # Weaker
-                is_permanent = False
+                strength = random.choice([-0.30, -0.45, -0.55])  # Noticeable
+                is_permanent = random.random() < 0.15
 
             effect = Effect(
                 effect_id="deal_failure",
