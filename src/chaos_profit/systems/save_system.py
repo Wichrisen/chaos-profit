@@ -12,9 +12,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
-from ..core.models import PlayerState
+from ..core.models import PlayerState, Business, Effect
 
 
 SAVE_DIR = Path("saves")
@@ -65,23 +64,79 @@ class SaveSystem:
     # ------------------------------------------------------------------
 
     def _serialize(self, state: PlayerState) -> dict:
-        # Simple implementation using dataclasses.asdict + custom datetime handling
-        from dataclasses import asdict
-        data = asdict(state)
+        """Convert PlayerState into a JSON-serializable dictionary."""
+        data = {
+            "version": state.version,
+            "last_played_at": state.last_played_at.isoformat(),
+            "ratysurd_level": state.ratysurd_level,
+            "kloneta": state.kloneta,
+            "kloneta_last_regen_at": state.kloneta_last_regen_at.isoformat(),
+            "bizneta": state.bizneta,
+            "businesses": {
+                niche_id: self._serialize_business(biz)
+                for niche_id, biz in state.businesses.items()
+            },
+            "regular_potions": state.regular_potions,
+            "permanent_cleanse_potions": state.permanent_cleanse_potions,
+            "chaos_suppression_potions": state.chaos_suppression_potions,
+            "total_clients_ever": state.total_clients_ever,
+            "total_bizneta_earned": state.total_bizneta_earned,
+        }
+        return data
 
-        # Convert datetime objects to ISO strings
-        def convert(obj):
-            if isinstance(obj, datetime):
-                return obj.isoformat()
-            return obj
+    def _serialize_business(self, business: Business) -> dict:
+        return {
+            "niche_id": business.niche_id,
+            "clients": business.clients,
+            "effects": [self._serialize_effect(e) for e in business.effects],
+            "base_client_gain_per_minute": business.base_client_gain_per_minute,
+        }
 
-        return json.loads(json.dumps(data, default=convert))
+    def _serialize_effect(self, effect: Effect) -> dict:
+        return {
+            "effect_id": effect.effect_id,
+            "strength": effect.strength,
+            "is_permanent": effect.is_permanent,
+            "applied_at": effect.applied_at.isoformat(),
+            "expires_at": effect.expires_at.isoformat() if effect.expires_at else None,
+        }
 
     def _deserialize(self, data: dict) -> PlayerState:
-        # TODO: Proper deserialization with datetime reconstruction
-        # For now we use a very naive approach
-        state = PlayerState(**{k: v for k, v in data.items() if k != "last_played_at"})
-        state.last_played_at = datetime.fromisoformat(data["last_played_at"])
+        """Reconstruct PlayerState from dictionary."""
+
+        businesses = {}
+        for niche_id, biz_data in data.get("businesses", {}).items():
+            effects = [
+                Effect(
+                    effect_id=e["effect_id"],
+                    strength=e["strength"],
+                    is_permanent=e["is_permanent"],
+                    applied_at=datetime.fromisoformat(e["applied_at"]),
+                    expires_at=datetime.fromisoformat(e["expires_at"]) if e.get("expires_at") else None,
+                )
+                for e in biz_data.get("effects", [])
+            ]
+            businesses[niche_id] = Business(
+                niche_id=biz_data["niche_id"],
+                clients=biz_data.get("clients", 0.0),
+                effects=effects,
+                base_client_gain_per_minute=biz_data.get("base_client_gain_per_minute", 0.0),
+            )
+
+        state = PlayerState(
+            version=data.get("version", 1),
+            last_played_at=datetime.fromisoformat(data["last_played_at"]),
+            ratysurd_level=data.get("ratysurd_level", 1),
+            kloneta=data.get("kloneta", 5),
+            kloneta_last_regen_at=datetime.fromisoformat(data["kloneta_last_regen_at"]),
+            bizneta=data.get("bizneta", 0.0),
+            businesses=businesses,
+            regular_potions=data.get("regular_potions", {}),
+            permanent_cleanse_potions=data.get("permanent_cleanse_potions", 0),
+            chaos_suppression_potions=data.get("chaos_suppression_potions", 0),
+            total_clients_ever=data.get("total_clients_ever", 0.0),
+            total_bizneta_earned=data.get("total_bizneta_earned", 0.0),
+        )
         return state
 
     def _apply_offline_progress(self, state: PlayerState, seconds_passed: float) -> PlayerState:
