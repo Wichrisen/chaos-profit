@@ -328,6 +328,7 @@ class ConsoleApp:
         print(f"Bizneta: {state.bizneta:,.2f}")
         print(f"Last played: {state.last_played_at.strftime('%Y-%m-%d %H:%M:%S')} UTC")
         print(f"Time since last action: {(now - state.last_played_at).total_seconds() / 60:.1f} min")
+        print(f"Total time played: {state.total_time_advanced / 60:.1f} min")
 
         # Show active global suppression
         if state.chaos_suppression_until and now < state.chaos_suppression_until:

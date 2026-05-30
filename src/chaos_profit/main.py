@@ -55,15 +55,16 @@ def main():
     print(f"\nTest business effective client gain: {effective_gain:.2f} / min (base was 20.0)")
     print(f"Starting clients on test business: {test_business.clients:.2f}")
 
-    # Demonstrate live time advancement with effects
+    # Demonstrate live time advancement + Ratysurd growth
     print("\n--- Live Time Advancement Demo ---")
     game.advance_time(45)
     game.advance_time(600)
-    game.advance_time(1500)
+    game.advance_time(1500)  # This should trigger Ratysurd increases
 
     print(f"\nFinal clients on test business: {test_business.clients:.2f}")
     remaining_effects = len(test_business.effects)
     print(f"Effects remaining: {remaining_effects}")
+    print(f"Current Ratysurd: {game.state.ratysurd_level} (Total played: {game.state.total_time_advanced/60:.1f} min)")
 
     # Trigger manual save
     game.save()

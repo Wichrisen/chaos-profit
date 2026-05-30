@@ -68,11 +68,39 @@ class Game:
         # Delegate all time-based logic to TimeSystem
         self.time_system.apply_time(self.state, seconds, chaos_pressure=pressure)
 
+        # Track total time and handle Ratysurd growth
+        self.state.total_time_advanced += seconds
+        self._check_ratysurd_growth()
+
         # Check for new deals
         self.deal_system.update(self.state, seconds)
 
         # Update last played time
         self.state.last_played_at = datetime.now(timezone.utc)
+
+    def _check_ratysurd_growth(self) -> None:
+        """
+        Simple automatic Ratysurd growth for the prototype.
+        Every ~25-30 minutes of total played time → +1 level (capped at 15 for now).
+        """
+        thresholds = [25, 55, 90, 130, 175, 225, 280, 340, 405, 475, 550, 630, 715, 805]  # cumulative minutes
+
+        current_level = self.state.ratysurd_level
+        minutes_played = self.state.total_time_advanced / 60
+
+        for i, threshold in enumerate(thresholds):
+            target_level = i + 2  # level 2 at first threshold, etc.
+            if minutes_played >= threshold and current_level < target_level:
+                self.state.ratysurd_level = target_level
+                print(f"\n⚠️  РЕЙТИСУРД ПОВЫСИЛСЯ ДО {target_level}! Мир становится опаснее...")
+
+                # Reset last played time reference for pressure feeling
+                self.state.last_played_at = datetime.now(timezone.utc)
+                break
+
+        # Hard cap for prototype
+        if self.state.ratysurd_level > 15:
+            self.state.ratysurd_level = 15
 
     def shutdown(self) -> None:
         """Call this on game exit to ensure everything is saved."""

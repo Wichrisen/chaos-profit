@@ -86,6 +86,7 @@ class SaveSystem:
             "total_clients_ever": state.total_clients_ever,
             "total_bizneta_earned": state.total_bizneta_earned,
             "chaos_suppression_until": state.chaos_suppression_until.isoformat() if state.chaos_suppression_until else None,
+            "total_time_advanced": state.total_time_advanced,
         }
         return data
 
@@ -146,6 +147,7 @@ class SaveSystem:
             total_clients_ever=data.get("total_clients_ever", 0.0),
             total_bizneta_earned=data.get("total_bizneta_earned", 0.0),
             chaos_suppression_until=datetime.fromisoformat(data["chaos_suppression_until"]) if data.get("chaos_suppression_until") else None,
+            total_time_advanced=data.get("total_time_advanced", 0.0),
         )
         return state
 

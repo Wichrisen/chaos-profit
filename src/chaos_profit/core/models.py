@@ -104,6 +104,9 @@ class PlayerState:
     # Temporary global effects
     chaos_suppression_until: datetime | None = None  # Activated by the rare Chaos Suppression potion
 
+    # Progression tracking
+    total_time_advanced: float = 0.0  # Total seconds the player has advanced time (for Ratysurd growth)
+
     @classmethod
     def new_game(cls) -> "PlayerState":
         """Factory method for a completely fresh game state."""
@@ -119,4 +122,5 @@ class PlayerState:
             permanent_cleanse_potions=0,
             chaos_suppression_potions=0,
             chaos_suppression_until=None,
+            total_time_advanced=0.0,
         )
