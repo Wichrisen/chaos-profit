@@ -21,31 +21,33 @@ from datetime import datetime, timezone, timedelta
 
 # Symbol definitions for the prototype
 # Format: (symbol_id, display_name, category, weight)
+# Weights are tuned so that businesses feel special, and good outcomes are satisfying but not too frequent.
 SYMBOLS = [
-    # Regular rewards
-    ("bizneta_small",  "💰 Small Bizneta",   "reward",  18),
-    ("bizneta_medium", "💰💰 Bizneta",       "reward",  10),
-    ("clients_small",  "👥 Clients",         "reward",  15),
-    ("clients_medium", "👥👥 Clients",       "reward",   8),
+    # Regular rewards (most common)
+    ("bizneta_small",  "💰 Small Bizneta",   "reward",  20),
+    ("bizneta_medium", "💰💰 Bizneta",       "reward",  9),
+    ("clients_small",  "👥 Clients",         "reward",  16),
+    ("clients_medium", "👥👥 Clients",       "reward",   7),
 
     # Potion drops
-    ("potion_2min",    "🧪 2min Potion",     "potion",   6),
-    ("potion_5min",    "🧪 5min Potion",     "potion",   5),
-    ("potion_10min",   "🧪 10min Potion",    "potion",   4),
-    ("potion_30min",   "🧪 30min Potion",    "potion",   2),
+    ("potion_2min",    "🧪 2min Potion",     "potion",   5),
+    ("potion_5min",    "🧪 5min Potion",     "potion",   4),
+    ("potion_10min",   "🧪 10min Potion",    "potion",   3),
+    ("potion_30min",   "🧪 30min Potion",    "potion",   1.5),
 
     # Business drops (these go on the middle reel)
-    ("business_bakery",     "🍞 Bakery",           "business", 3),
-    ("business_debts",      "📜 Debts Bureau",     "business", 3),
-    ("business_echo",       "🍹 Echo Bar",         "business", 3),
-    ("business_second",     "🪞 Second Self",      "business", 3),
-    ("business_whisper",    "🗣️ Whisper Agency",   "business", 2),
-    ("business_razlom",     "🌀 Razlom Express",   "business", 2),
-    ("business_never",      "❓ Market of Never",  "business", 2),
+    # Made rarer so they feel like real highlights when they appear.
+    ("business_bakery",     "🍞 Bakery",           "business", 1.8),
+    ("business_debts",      "📜 Debts Bureau",     "business", 1.8),
+    ("business_echo",       "🍹 Echo Bar",         "business", 1.6),
+    ("business_second",     "🪞 Second Self",      "business", 1.6),
+    ("business_whisper",    "🗣️ Whisper Agency",   "business", 1.1),
+    ("business_razlom",     "🌀 Razlom Express",   "business", 1.0),
+    ("business_never",      "❓ Market of Never",  "business", 0.9),
 
-    # Rare / special
-    ("rare_potion",    "✨ Rare Cleanse",    "rare",     1),
-    ("chaos_potion",   "🌪️ Chaos Suppress",  "rare",     1),
+    # Rare / special (very rare)
+    ("rare_potion",    "✨ Rare Cleanse",    "rare",     0.8),
+    ("chaos_potion",   "🌪️ Chaos Suppress",  "rare",     0.7),
 ]
 
 # Map symbol_id → nice display name for results
@@ -99,31 +101,31 @@ class SlotSystem:
         state.kloneta -= 1
 
         # === Rolling animation (builds tension) ===
-        print("\n🎰  Spinning...", end=" ", flush=True)
+        print("\n🎰  Spinning the reels...", end=" ", flush=True)
 
-        # Stage 1: fast
+        # Stage 1: fast and chaotic
+        for _ in range(7):
+            temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
+            temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
+            temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
+            print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
+            time.sleep(0.04)
+
+        # Stage 2: slowing down noticeably
         for _ in range(6):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.045)
+            time.sleep(0.085)
 
-        # Stage 2: slowing down (adds weight)
-        for _ in range(5):
+        # Stage 3: very slow + deliberate (maximum tension)
+        for _ in range(4):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.09)
-
-        # Stage 3: very slow (final tension)
-        for _ in range(3):
-            temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.18)
+            time.sleep(0.22)
 
         print("\r", end="")
 
@@ -132,7 +134,19 @@ class SlotSystem:
         reel2 = self._roll_symbol(allow_business=True)
         reel3 = self._roll_symbol()
 
+        # === Chaotic Spin at very high Ratysurd ===
+        is_chaotic_spin = False
+        if state.ratysurd_level >= 11 and random.random() < 0.28:
+            is_chaotic_spin = True
+            # Force a more extreme roll
+            reel1 = self._roll_symbol()
+            reel2 = self._roll_symbol(allow_business=True)
+            reel3 = self._roll_symbol()
+
         result = self._evaluate_spin(reel1, reel2, reel3, state)
+
+        if is_chaotic_spin:
+            result.message = "CHAOTIC SPIN! " + result.message
         result.reel1 = SYMBOL_DISPLAY.get(reel1, reel1)
         result.reel2 = SYMBOL_DISPLAY.get(reel2, reel2)
         result.reel3 = SYMBOL_DISPLAY.get(reel3, reel3)

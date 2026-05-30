@@ -309,13 +309,22 @@ class ConsoleApp:
             return
 
         # The SlotSystem prints the reels + main message with appropriate drama.
-        # We add one final flavorful reaction line.
-        if result.business_gained:
-            print("   → A new business has joined your empire. This changes things.")
-        elif result.is_rare:
-            print("   → This one could shift the entire run.")
-        elif (result.bizneta_gained or 0) + (result.clients_gained or 0) >= 30:
-            print("   → Very nice spin.")
+        # We add one final flavorful reaction line + visual framing.
+        if "CHAOTIC SPIN" in result.message:
+            print("█" * 52)
+            print("   → The chaos twisted this spin. High risk, high reward.")
+            print("█" * 52)
+        elif result.business_gained or result.is_rare:
+            print("═" * 50)
+            if result.business_gained:
+                print("   → A new business has joined your empire. This changes things.")
+            else:
+                print("   → This one could shift the entire run.")
+            print("═" * 50)
+        elif (result.bizneta_gained or 0) + (result.clients_gained or 0) >= 35:
+            print("─" * 50)
+            print("   → Very nice spin. That felt good.")
+            print("─" * 50)
         elif result.bizneta_gained or result.clients_gained:
             print("   → It adds up.")
         else:
