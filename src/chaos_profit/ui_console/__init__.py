@@ -1,0 +1,1 @@
+"""Temporary console prototype UI."""

@@ -1,0 +1,8 @@
+# Core
+pygame>=2.6.0
+
+# Console prototype (optional but highly recommended for nice UI during early development)
+rich>=13.0.0
+
+# Testing & tooling
+pytest>=8.0.0
