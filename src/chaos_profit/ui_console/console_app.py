@@ -308,20 +308,23 @@ class ConsoleApp:
             print("Not enough Kloneta to spin!")
             return
 
-        # The rolling + main message is printed inside the SlotSystem.
-        # Here we just add a clean summary line.
-        extras = []
-        if result.bizneta_gained:
-            extras.append(f"+{result.bizneta_gained} Bizneta")
-        if result.clients_gained:
-            extras.append(f"+{result.clients_gained} clients")
+        # The SlotSystem prints the reels + main message with appropriate drama.
+        # We add one final flavorful reaction line.
         if result.business_gained:
-            extras.append("New Business!")
-        if result.is_rare:
-            extras.append("RARE DROP!")
-
-        if extras:
-            print(f"   → {', '.join(extras)}")
+            print("   → A new business has joined your empire. This changes things.")
+        elif result.is_rare:
+            print("   → This one could shift the entire run.")
+        elif (result.bizneta_gained or 0) + (result.clients_gained or 0) >= 30:
+            print("   → Very nice spin.")
+        elif result.bizneta_gained or result.clients_gained:
+            print("   → It adds up.")
+        else:
+            if self.game.state.ratysurd_level >= 10:
+                print("   → The chaos is eating spins today...")
+            elif self.game.state.ratysurd_level >= 7:
+                print("   → Cold reels. Pressure is rising.")
+            else:
+                print("   → Blank. It happens.")
 
         self._print_status()
 
