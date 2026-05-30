@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from .core.models import PlayerState
 from .systems.save_system import SaveSystem
+from .systems.effect_system import EffectSystem
 
 
 class Game:
@@ -21,6 +22,7 @@ class Game:
         self.save_system = SaveSystem()
         self.state: PlayerState = self.save_system.load()
 
+        self.effect_system = EffectSystem()
         self._last_autosave = datetime.now(timezone.utc)
 
     def save(self) -> None:
@@ -58,8 +60,8 @@ class Game:
         self._apply_kloneta_regen(seconds)
         self._apply_bizneta_income(seconds)
 
-        # TODO later:
-        # self._apply_effects_and_clients(seconds)
+        # Process effects (expiration + future continuous effects)
+        self.effect_system.process_time_effects(self.state, seconds)
 
         # Update last played time
         self.state.last_played_at = datetime.now(timezone.utc)

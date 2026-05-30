@@ -27,20 +27,42 @@ def main():
     print(f"  Bizneta now    : {game.state.bizneta:.2f}")
     print(f"  Kloneta now    : {game.state.kloneta}")
 
-    # Create a temporary test business to demonstrate income
-    from src.chaos_profit.core.models import Business
+    # Create a temporary test business with a negative effect to demonstrate EffectSystem
+    from datetime import datetime, timezone, timedelta
+    from src.chaos_profit.core.models import Business, Effect
+
     test_business = Business(
         niche_id="test_business",
-        clients=50.0,
-        base_bizneta_per_minute=2.5,   # 2.5 Bizneta per minute base
+        clients=100.0,
+        base_bizneta_per_minute=3.0,
+        base_client_gain_per_minute=20.0,   # Base 20 clients per minute
     )
+
+    # Apply a strong temporary negative effect (-60% client gain for 30 minutes)
+    negative_effect = Effect(
+        effect_id="client_leak",
+        strength=-0.60,
+        is_permanent=False,
+        applied_at=datetime.now(timezone.utc),
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+    )
+    test_business.effects.append(negative_effect)
+
     game.state.businesses["test_business"] = test_business
 
-    # Demonstrate time advancement
+    # Show effective client gain before time passes
+    effective_gain = game.effect_system.get_effective_client_gain_per_minute(test_business)
+    print(f"\nTest business effective client gain: {effective_gain:.2f} / min (base was 20.0)")
+
+    # Demonstrate time advancement + effect expiration
     print("\n--- Time Advancement Demo ---")
     game.advance_time(45)           # 45 seconds
     game.advance_time(600)          # 10 minutes
     game.advance_time(25 * 60)      # 25 minutes
+
+    # Check if the effect is still active after time passed
+    remaining_effects = len(test_business.effects)
+    print(f"\nEffects remaining on test business after time: {remaining_effects}")
 
     # Trigger manual save
     game.save()
