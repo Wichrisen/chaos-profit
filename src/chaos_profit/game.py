@@ -59,6 +59,7 @@ class Game:
         # Apply time-based mechanics in order
         self._apply_kloneta_regen(seconds)
         self._apply_bizneta_income(seconds)
+        self._apply_client_changes(seconds)
 
         # Process effects (expiration + future continuous effects)
         self.effect_system.process_time_effects(self.state, seconds)
@@ -86,6 +87,32 @@ class Game:
         if total_income > 0:
             self.state.bizneta += total_income
             print(f"  → Earned +{total_income:.2f} Bizneta from businesses")
+
+    def _apply_client_changes(self, seconds: float) -> None:
+        """
+        Apply client gain or loss over time for all businesses,
+        using the effective rate from the EffectSystem.
+        """
+        if not self.state.businesses:
+            return
+
+        minutes = seconds / 60.0
+        total_client_change = 0.0
+
+        for business in self.state.businesses.values():
+            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business)
+            client_delta = effective_gain * minutes
+
+            business.clients += client_delta
+            total_client_change += client_delta
+
+            # Prevent clients from going negative
+            if business.clients < 0:
+                business.clients = 0.0
+
+        if abs(total_client_change) > 0.01:
+            direction = "gained" if total_client_change > 0 else "lost"
+            print(f"  → Clients {direction} {abs(total_client_change):.2f} across all businesses")
 
     def _apply_kloneta_regen(self, seconds: float) -> None:
         """
