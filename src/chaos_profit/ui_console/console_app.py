@@ -308,10 +308,20 @@ class ConsoleApp:
             print("Not enough Kloneta to spin!")
             return
 
-        # The rolling animation + dramatic message is already printed inside SlotSystem.spin()
-        # We just add a small summary here if needed
-        if result.bizneta_gained or result.clients_gained:
-            print(f"   [Total this spin: +{result.bizneta_gained} Bizneta, +{result.clients_gained} clients]")
+        # The rolling + main message is printed inside the SlotSystem.
+        # Here we just add a clean summary line.
+        extras = []
+        if result.bizneta_gained:
+            extras.append(f"+{result.bizneta_gained} Bizneta")
+        if result.clients_gained:
+            extras.append(f"+{result.clients_gained} clients")
+        if result.business_gained:
+            extras.append("New Business!")
+        if result.is_rare:
+            extras.append("RARE DROP!")
+
+        if extras:
+            print(f"   → {', '.join(extras)}")
 
         self._print_status()
 

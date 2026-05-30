@@ -144,9 +144,12 @@ class SlotSystem:
         return random.choices(pool, weights=weights, k=1)[0]
 
     def _evaluate_spin(self, r1: str, r2: str, r3: str, state: PlayerState) -> SpinResult:
-        """Decide what the player gets. More dramatic outcomes."""
+        """More emotional and weighty outcomes with combinations and Ratysurd variance."""
 
-        # === Business drop (highest value) ===
+        ratysurd = state.ratysurd_level
+        variance = max(0.8, 1.0 + (ratysurd - 5) * 0.06) if ratysurd > 5 else 1.0  # higher Ratysurd = more swingy
+
+        # === Business drop (still the best outcome) ===
         if r2 in self.business_pool:
             niche_name, tier = BUSINESS_SYMBOL_MAP[r2]
             business_id = r2.replace("business_", "")
@@ -163,28 +166,28 @@ class SlotSystem:
                 )
                 state.businesses[business_id] = new_biz
                 return SpinResult(r1, r2, r3,
-                                  f"★ NEW BUSINESS! {niche_name} (Tier {tier})!",
+                                  f"★ NEW BUSINESS UNLOCKED! {niche_name} (Tier {tier})! ★",
                                   business_gained=business_id,
                                   is_rare=True)
 
             else:
-                bonus = 1800 if tier == "C" else 1200
+                bonus = int(2200 * variance) if tier == "C" else int(1500 * variance)
                 state.bizneta += bonus
                 return SpinResult(r1, r2, r3,
-                                  f"Duplicate {niche_name}! +{bonus} Bizneta compensation.",
+                                  f"Duplicate {niche_name}... +{bonus} Bizneta as compensation.",
                                   bizneta_gained=bonus)
 
-        # === Rare potion drops (very exciting) ===
+        # === Rare potion drops (high emotional weight) ===
         if r1 in self.rare_pool or r3 in self.rare_pool:
             if r1 == "rare_potion" or r3 == "rare_potion":
                 state.permanent_cleanse_potions += 1
                 return SpinResult(r1, r2, r3,
-                                  "✨✨ JACKPOT! PERMANENT CLEANSE POTION! ✨✨",
+                                  "✨✨✨ INSANE! PERMANENT CLEANSE POTION! ✨✨✨",
                                   is_rare=True)
             if r1 == "chaos_potion" or r3 == "chaos_potion":
                 state.chaos_suppression_potions += 1
                 return SpinResult(r1, r2, r3,
-                                  "🌪️🌪️ RARE! CHAOS SUPPRESSION POTION! 🌪️🌪️",
+                                  "🌪️🌪️🌪️ RARE DROP! CHAOS SUPPRESSION POTION! 🌪️🌪️🌪️",
                                   is_rare=True)
 
         # === Regular potion drops ===
@@ -200,41 +203,54 @@ class SlotSystem:
                 state.regular_potions[pot] = state.regular_potions.get(pot, 0) + 1
                 return SpinResult(r1, r2, r3, f"Got a {pot} potion!")
 
-        # === Regular rewards with tiers ===
+        # === Regular rewards with proper combinations ===
         bizneta = 0
         clients = 0
 
-        reward_count = sum(1 for r in (r1, r2, r3) if "bizneta" in r or "clients" in r)
+        reward_symbols = [r for r in (r1, r2, r3) if "bizneta" in r or "clients" in r]
+        reward_count = len(reward_symbols)
 
-        for reel in (r1, r2, r3):
-            if reel == "bizneta_small":
-                bizneta += random.randint(70, 130)
-            elif reel == "bizneta_medium":
-                bizneta += random.randint(160, 280)
-            elif reel == "clients_small":
-                clients += random.randint(4, 8)
-            elif reel == "clients_medium":
-                clients += random.randint(9, 16)
+        # Count specific types
+        small_biz = sum(1 for r in (r1, r2, r3) if r == "bizneta_small")
+        med_biz   = sum(1 for r in (r1, r2, r3) if r == "bizneta_medium")
+        small_cli = sum(1 for r in (r1, r2, r3) if r == "clients_small")
+        med_cli   = sum(1 for r in (r1, r2, r3) if r == "clients_medium")
 
-        if bizneta > 0 or clients > 0:
-            state.bizneta += bizneta
-            if clients > 0 and state.businesses:
-                chosen = random.choice(list(state.businesses.values()))
-                chosen.clients += clients
+        # Base rewards
+        bizneta += small_biz * random.randint(80, 140)
+        bizneta += med_biz   * random.randint(200, 350)
+        clients += small_cli * random.randint(5, 9)
+        clients += med_cli   * random.randint(11, 18)
 
-            # Make the message more emotional based on size
-            if reward_count >= 2 or bizneta + clients >= 25:
-                msg = f"NICE! +{bizneta} Bizneta, +{clients} clients"
-            else:
-                msg = f"+{bizneta} Bizneta, +{clients} clients"
+        # Combination bonuses (this is what makes it feel weighty)
+        if reward_count >= 3:
+            bonus = int(random.randint(400, 700) * variance)
+            bizneta += bonus
+            msg = f"TRIPLE REWARD! +{bizneta} Bizneta, +{clients} clients"
+        elif reward_count == 2:
+            bonus = int(random.randint(150, 280) * variance)
+            bizneta += bonus
+            msg = f"Nice combo! +{bizneta} Bizneta, +{clients} clients"
+        elif reward_count == 1:
+            msg = f"+{bizneta} Bizneta, +{clients} clients"
+        else:
+            # Complete miss
+            miss_messages = [
+                "The reels are silent...",
+                "Nothing. The house wins this round.",
+                "Blank reels. Better luck next time.",
+                "Oof. Cold spin.",
+            ]
+            return SpinResult(r1, r2, r3, random.choice(miss_messages))
 
-            return SpinResult(r1, r2, r3, msg, bizneta_gained=bizneta, clients_gained=clients)
+        # Apply variance from Ratysurd on bigger wins
+        if reward_count >= 2:
+            bizneta = int(bizneta * variance)
+            clients = int(clients * variance)
 
-        # Miss
-        messages = [
-            "Nothing this time...",
-            "Blank... tough luck.",
-            "The reels are cold today.",
-            "No luck. Try again?",
-        ]
-        return SpinResult(r1, r2, r3, random.choice(messages))
+        state.bizneta += bizneta
+        if clients > 0 and state.businesses:
+            chosen = random.choice(list(state.businesses.values()))
+            chosen.clients += clients
+
+        return SpinResult(r1, r2, r3, msg, bizneta_gained=bizneta, clients_gained=clients)
