@@ -85,6 +85,7 @@ class SaveSystem:
             "chaos_suppression_potions": state.chaos_suppression_potions,
             "total_clients_ever": state.total_clients_ever,
             "total_bizneta_earned": state.total_bizneta_earned,
+            "chaos_suppression_until": state.chaos_suppression_until.isoformat() if state.chaos_suppression_until else None,
         }
         return data
 
@@ -142,6 +143,7 @@ class SaveSystem:
             chaos_suppression_potions=data.get("chaos_suppression_potions", 0),
             total_clients_ever=data.get("total_clients_ever", 0.0),
             total_bizneta_earned=data.get("total_bizneta_earned", 0.0),
+            chaos_suppression_until=datetime.fromisoformat(data["chaos_suppression_until"]) if data.get("chaos_suppression_until") else None,
         )
         return state
 

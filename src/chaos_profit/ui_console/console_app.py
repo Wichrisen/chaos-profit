@@ -60,6 +60,10 @@ class ConsoleApp:
             self._resolve_current_deal(accept=True)
         elif command in ("refuse", "no", "n"):
             self._resolve_current_deal(accept=False)
+        elif command in ("potions", "p", "inv"):
+            self._print_potions()
+        elif command.startswith("use "):
+            self._handle_use_potion(command)
         else:
             print("Unknown command. Type 'help'.")
 
@@ -108,6 +112,43 @@ class ConsoleApp:
         print(message)
         self._print_status()
 
+    def _print_potions(self):
+        state = self.game.state
+        print("\n=== Potions ===")
+        print(f"Regular potions:")
+        if state.regular_potions:
+            for dur, count in sorted(state.regular_potions.items()):
+                print(f"  {dur}: {count}")
+        else:
+            print("  None")
+        print(f"Permanent Cleanse: {state.permanent_cleanse_potions}")
+        print(f"Chaos Suppression: {state.chaos_suppression_potions}")
+        print("Use with: use 2min / use 10min / use permanent / use suppression")
+
+    def _handle_use_potion(self, command: str):
+        parts = command.split(maxsplit=1)
+        if len(parts) < 2:
+            print("Usage: use <type>   (e.g. use 10min, use permanent, use suppression)")
+            return
+
+        potion = parts[1].strip().lower()
+
+        success = False
+        if potion in ("2min", "5min", "10min", "30min"):
+            success = self.game.use_regular_potion(potion)
+        elif potion in ("permanent", "cleanse"):
+            success = self.game.use_permanent_cleanse()
+        elif potion in ("suppression", "chaos", "suppress"):
+            success = self.game.use_chaos_suppression()
+        else:
+            print(f"Unknown potion type: {potion}")
+            return
+
+        if success:
+            self._print_status()
+        else:
+            print("You don't have that potion.")
+
     def _print_status(self):
         state = self.game.state
         now = datetime.now(timezone.utc)
@@ -147,6 +188,8 @@ Available commands:
   1m, 5m, 10m, 30m, 1h, 2h - Quick time advance
   deals, d               - Show current deal (if any)
   accept / refuse        - Accept or refuse the current deal
+  potions, p, inv        - Show potion inventory
+  use <type>             - Use a potion (e.g. use 10min, use permanent, use suppression)
   save, sv               - Force manual save
   reset, rst             - Full reset to factory state (with confirmation)
   tick, t                - Force a game tick (autosave check)

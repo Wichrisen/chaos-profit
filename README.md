@@ -25,6 +25,8 @@ python -m src.chaos_profit.ui_console.console_app
 - Быстрые команды: `1m`, `5m`, `10m`, `30m`, `1h`, `2h`
 - `deals` / `d` — показать текущую сделку
 - `accept` / `refuse` — принять или отказаться от сделки
+- `potions` / `p` — инвентарь зелий
+- `use <тип>` — использовать зелье (например: use 10min, use permanent, use suppression)
 - `save`, `reset`, `help`, `quit`
 
 Это временный инструмент для ручного тестирования механик.

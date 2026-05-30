@@ -73,3 +73,48 @@ class Game:
         """Call this on game exit to ensure everything is saved."""
         self.save()
         print("[Game] Shutdown complete. Progress saved.")
+
+    # ------------------------------------------------------------------
+    # Potion usage
+    # ------------------------------------------------------------------
+
+    def use_regular_potion(self, duration: str) -> bool:
+        """
+        Uses one regular potion of the given duration (e.g. '2min', '10min').
+        Removes all current negative effects from all businesses.
+        """
+        if self.state.regular_potions.get(duration, 0) <= 0:
+            return False
+
+        self.state.regular_potions[duration] -= 1
+        if self.state.regular_potions[duration] <= 0:
+            del self.state.regular_potions[duration]
+
+        removed = self.effect_system.remove_all_negative_effects(self.state)
+        print(f"Used {duration} potion. Removed {removed} negative effects.")
+        return True
+
+    def use_permanent_cleanse(self) -> bool:
+        """Uses the rare Permanent Cleanse potion."""
+        if self.state.permanent_cleanse_potions <= 0:
+            return False
+
+        self.state.permanent_cleanse_potions -= 1
+        removed = self.effect_system.remove_all_negative_effects(self.state)
+        print(f"Used Permanent Cleanse. Permanently removed {removed} negative effects.")
+        return True
+
+    def use_chaos_suppression(self) -> bool:
+        """Uses the very rare Chaos Suppression potion (10 min fixed)."""
+        if self.state.chaos_suppression_potions <= 0:
+            return False
+
+        self.state.chaos_suppression_potions -= 1
+        self.effect_system.apply_chaos_suppression(self.state, duration_minutes=10)
+        print("Used Chaos Suppression potion. Ratysurd pressure greatly reduced for 10 minutes.")
+        return True
+
+    def has_active_chaos_suppression(self) -> bool:
+        if not self.state.chaos_suppression_until:
+            return False
+        return datetime.now(timezone.utc) < self.state.chaos_suppression_until

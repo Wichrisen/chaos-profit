@@ -75,6 +75,9 @@ class PlayerState:
     total_clients_ever: float = 0.0
     total_bizneta_earned: float = 0.0
 
+    # Temporary global effects
+    chaos_suppression_until: datetime | None = None  # Activated by the rare Chaos Suppression potion
+
     @classmethod
     def new_game(cls) -> "PlayerState":
         """Factory method for a completely fresh game state."""
@@ -89,4 +92,5 @@ class PlayerState:
             regular_potions={},
             permanent_cleanse_potions=0,
             chaos_suppression_potions=0,
+            chaos_suppression_until=None,
         )

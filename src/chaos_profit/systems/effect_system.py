@@ -85,3 +85,24 @@ class EffectSystem:
     def has_active_negative_effects(self, business: Business) -> bool:
         """Quick check if the business currently has any negative effects."""
         return any(e.strength < 0 for e in business.effects)
+
+    def remove_all_negative_effects(self, state: PlayerState) -> int:
+        """
+        Removes all currently negative effects from all businesses.
+        Returns how many effects were removed.
+        Used by regular potions and Permanent Cleanse.
+        """
+        removed = 0
+        for business in state.businesses.values():
+            before = len(business.effects)
+            business.effects = [e for e in business.effects if e.strength >= 0]
+            removed += before - len(business.effects)
+        return removed
+
+    def apply_chaos_suppression(self, state: PlayerState, duration_minutes: int = 10) -> None:
+        """
+        Activates temporary Ratysurd suppression.
+        For the prototype we store it on the state.
+        """
+        now = datetime.now(timezone.utc)
+        state.chaos_suppression_until = now + timedelta(minutes=duration_minutes)
