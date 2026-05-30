@@ -100,32 +100,38 @@ class SlotSystem:
         # Spend Kloneta
         state.kloneta -= 1
 
-        # === Rolling animation (builds tension) ===
-        print("\n🎰  Spinning the reels...", end=" ", flush=True)
+        # === Rolling animation changes personality with Ratysurd ===
+        ratysurd = state.ratysurd_level
+        is_high_chaos = ratysurd >= 10
 
-        # Stage 1: fast and chaotic
+        if is_high_chaos:
+            print("\n🌪️  The reels twist and scream...", end=" ", flush=True)
+        else:
+            print("\n🎰  Spinning the reels...", end=" ", flush=True)
+
+        # Stage 1
         for _ in range(7):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.04)
+            time.sleep(0.03 if is_high_chaos else 0.04)
 
-        # Stage 2: slowing down noticeably
+        # Stage 2
         for _ in range(6):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.085)
+            time.sleep(0.07 if is_high_chaos else 0.085)
 
-        # Stage 3: very slow + deliberate (maximum tension)
+        # Stage 3 — final tension
         for _ in range(4):
             temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
             temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
             print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
-            time.sleep(0.22)
+            time.sleep(0.18 if is_high_chaos else 0.22)
 
         print("\r", end="")
 
@@ -136,7 +142,7 @@ class SlotSystem:
 
         # === Chaotic Spin at very high Ratysurd ===
         is_chaotic_spin = False
-        if state.ratysurd_level >= 11 and random.random() < 0.28:
+        if state.ratysurd_level >= 11 and random.random() < 0.35:
             is_chaotic_spin = True
             # Force a more extreme roll
             reel1 = self._roll_symbol()
@@ -146,7 +152,14 @@ class SlotSystem:
         result = self._evaluate_spin(reel1, reel2, reel3, state)
 
         if is_chaotic_spin:
-            result.message = "CHAOTIC SPIN! " + result.message
+            # At high chaos the slot can twist the outcome after evaluation
+            if random.random() < 0.45 and not result.business_gained and not result.is_rare:
+                loss = random.randint(120, 280)
+                state.bizneta = max(0, state.bizneta - loss)
+                result.message = f"CHAOTIC SPIN! The reels curse you... -{loss} Bizneta"
+            else:
+                result.message = "CHAOTIC SPIN! " + result.message
+
         result.reel1 = SYMBOL_DISPLAY.get(reel1, reel1)
         result.reel2 = SYMBOL_DISPLAY.get(reel2, reel2)
         result.reel3 = SYMBOL_DISPLAY.get(reel3, reel3)
