@@ -38,9 +38,10 @@ class Business:
     # Effects that are currently applied to this business
     effects: List[Effect] = field(default_factory=list)
 
-    # Base client gain rate (clients per minute) without any effects.
-    # This value is recalculated when Ratysurd level changes.
+    # Base values without effects.
+    # These are recalculated when Ratysurd level changes.
     base_client_gain_per_minute: float = 0.0
+    base_bizneta_per_minute: float = 0.0   # Direct Bizneta income per minute from this business
 
 
 @dataclass

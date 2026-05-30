@@ -27,11 +27,20 @@ def main():
     print(f"  Bizneta now    : {game.state.bizneta:.2f}")
     print(f"  Kloneta now    : {game.state.kloneta}")
 
+    # Create a temporary test business to demonstrate income
+    from src.chaos_profit.core.models import Business
+    test_business = Business(
+        niche_id="test_business",
+        clients=50.0,
+        base_bizneta_per_minute=2.5,   # 2.5 Bizneta per minute base
+    )
+    game.state.businesses["test_business"] = test_business
+
     # Demonstrate time advancement
     print("\n--- Time Advancement Demo ---")
-    game.advance_time(45)           # 45 seconds → should do nothing
-    game.advance_time(600)          # 10 minutes → should regen 1 Kloneta
-    game.advance_time(25 * 60)      # 25 minutes → should regen 2 more (capped at 5)
+    game.advance_time(45)           # 45 seconds
+    game.advance_time(600)          # 10 minutes
+    game.advance_time(25 * 60)      # 25 minutes
 
     # Trigger manual save
     game.save()

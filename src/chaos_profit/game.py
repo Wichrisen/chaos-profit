@@ -56,9 +56,9 @@ class Game:
 
         # Apply time-based mechanics in order
         self._apply_kloneta_regen(seconds)
+        self._apply_bizneta_income(seconds)
 
         # TODO later:
-        # self._apply_bizneta_income(seconds)
         # self._apply_effects_and_clients(seconds)
 
         # Update last played time
@@ -67,6 +67,23 @@ class Game:
     # ------------------------------------------------------------------
     # Time-based mechanics (implemented step by step)
     # ------------------------------------------------------------------
+
+    def _apply_bizneta_income(self, seconds: float) -> None:
+        """Начисление Бизнет от всех бизнесов за прошедшее время (базовое, без эффектов пока)."""
+        if not self.state.businesses:
+            return
+
+        minutes = seconds / 60.0
+        total_income = 0.0
+
+        for business in self.state.businesses.values():
+            # На этом шаге — только база. Эффекты добавим позже.
+            income = business.base_bizneta_per_minute * minutes
+            total_income += income
+
+        if total_income > 0:
+            self.state.bizneta += total_income
+            print(f"  → Earned +{total_income:.2f} Bizneta from businesses")
 
     def _apply_kloneta_regen(self, seconds: float) -> None:
         """
