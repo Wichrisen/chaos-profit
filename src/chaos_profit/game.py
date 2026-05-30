@@ -14,6 +14,7 @@ from .core.models import PlayerState
 from .systems.save_system import SaveSystem
 from .systems.effect_system import EffectSystem
 from .systems.time_system import TimeSystem
+from .systems.deal_system import DealSystem
 
 
 class Game:
@@ -25,6 +26,7 @@ class Game:
 
         self.effect_system = EffectSystem()
         self.time_system = TimeSystem(self.effect_system)
+        self.deal_system = DealSystem()
         self._last_autosave = datetime.now(timezone.utc)
 
     def save(self) -> None:
@@ -60,6 +62,9 @@ class Game:
 
         # Delegate all time-based logic to TimeSystem
         self.time_system.apply_time(self.state, seconds)
+
+        # Check for new deals
+        self.deal_system.update(self.state, seconds)
 
         # Update last played time
         self.state.last_played_at = datetime.now(timezone.utc)

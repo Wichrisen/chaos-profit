@@ -54,6 +54,12 @@ class ConsoleApp:
         elif command in ("tick", "t"):
             self.game.tick()
             print("Tick processed (autosave check).")
+        elif command in ("deals", "deal", "d"):
+            self._handle_deals()
+        elif command in ("accept", "yes", "y"):
+            self._resolve_current_deal(accept=True)
+        elif command in ("refuse", "no", "n"):
+            self._resolve_current_deal(accept=False)
         else:
             print("Unknown command. Type 'help'.")
 
@@ -88,6 +94,19 @@ class ConsoleApp:
         if minutes > 0:
             self.game.advance_time(minutes * 60)
             self._print_status()
+
+    def _handle_deals(self):
+        info = self.game.deal_system.get_current_deal_info()
+        if info:
+            print(f"\nАктивная сделка: {info}")
+            print("Напиши 'accept' / 'yes' чтобы принять или 'refuse' / 'no' чтобы отказаться.")
+        else:
+            print("Сейчас нет активных сделок.")
+
+    def _resolve_current_deal(self, accept: bool):
+        success, message = self.game.deal_system.resolve_deal(self.game.state, accept)
+        print(message)
+        self._print_status()
 
     def _print_status(self):
         state = self.game.state
@@ -126,6 +145,8 @@ Available commands:
   status, s, st          - Show current game state
   advance <minutes>, a   - Advance time (e.g. 'advance 60' or 'a 30')
   1m, 5m, 10m, 30m, 1h, 2h - Quick time advance
+  deals, d               - Show current deal (if any)
+  accept / refuse        - Accept or refuse the current deal
   save, sv               - Force manual save
   reset, rst             - Full reset to factory state (with confirmation)
   tick, t                - Force a game tick (autosave check)
