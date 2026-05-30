@@ -310,10 +310,10 @@ class ConsoleApp:
 
         # The SlotSystem prints the reels + main message with appropriate drama.
         # We add one final flavorful reaction line + visual framing.
-        if "CHAOTIC SPIN" in result.message:
-            print("█" * 54)
-            print("   → The chaos twisted this spin. High risk, high reward.")
-            print("█" * 54)
+        if "CHAOTIC SPIN" in result.message or "cursed" in result.message.lower() or "twisted" in result.message.lower():
+            print("▓" * 56)
+            print("   → The chaos itself reached into the reels.")
+            print("▓" * 56)
         elif result.business_gained or result.is_rare:
             print("═" * 50)
             if result.business_gained:

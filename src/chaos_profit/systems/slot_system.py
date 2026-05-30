@@ -140,25 +140,24 @@ class SlotSystem:
         reel2 = self._roll_symbol(allow_business=True)
         reel3 = self._roll_symbol()
 
-        # === Chaotic Spin at very high Ratysurd ===
         is_chaotic_spin = False
-        if state.ratysurd_level >= 11 and random.random() < 0.35:
+
+        # === High Ratysurd: chance to corrupt one of the reels ===
+        if state.ratysurd_level >= 10 and random.random() < 0.40:
             is_chaotic_spin = True
-            # Force a more extreme roll
-            reel1 = self._roll_symbol()
-            reel2 = self._roll_symbol(allow_business=True)
-            reel3 = self._roll_symbol()
+            # Corrupt one random reel
+            corrupt_index = random.randint(0, 2)
+            if corrupt_index == 0:
+                reel1 = self._get_corrupted_symbol(reel1)
+            elif corrupt_index == 1:
+                reel2 = self._get_corrupted_symbol(reel2)
+            else:
+                reel3 = self._get_corrupted_symbol(reel3)
 
         result = self._evaluate_spin(reel1, reel2, reel3, state)
 
         if is_chaotic_spin:
-            # At high chaos the slot can twist the outcome after evaluation
-            if random.random() < 0.45 and not result.business_gained and not result.is_rare:
-                loss = random.randint(120, 280)
-                state.bizneta = max(0, state.bizneta - loss)
-                result.message = f"CHAOTIC SPIN! The reels curse you... -{loss} Bizneta"
-            else:
-                result.message = "CHAOTIC SPIN! " + result.message
+            result.message = "CHAOTIC SPIN! " + result.message
 
         result.reel1 = SYMBOL_DISPLAY.get(reel1, reel1)
         result.reel2 = SYMBOL_DISPLAY.get(reel2, reel2)
@@ -175,6 +174,20 @@ class SlotSystem:
             print(f"   → {result.message}")
 
         return result
+
+    def _get_corrupted_symbol(self, original: str) -> str:
+        """At high Ratysurd, symbols can twist into corrupted versions with mixed outcomes."""
+        mapping = {
+            "bizneta_small": "cursed_bizneta",
+            "bizneta_medium": "cursed_bizneta",
+            "clients_small": "cursed_clients",
+            "clients_medium": "cursed_clients",
+            "potion_2min": "cursed_potion",
+            "potion_5min": "cursed_potion",
+            "potion_10min": "cursed_potion",
+            "potion_30min": "cursed_potion",
+        }
+        return mapping.get(original, original)
 
     def _roll_symbol(self, allow_business: bool = False) -> str:
         """Roll one symbol with current weights."""
@@ -231,6 +244,51 @@ class SlotSystem:
             if r1 == "chaos_potion" or r3 == "chaos_potion":
                 state.chaos_suppression_potions += 1
                 return SpinResult(r1, r2, r3, "🌪️🌪️🌪️ INSANE! CHAOS SUPPRESSION POTION! 🌪️🌪️🌪️", is_rare=True)
+
+        # === Corrupted (high Ratysurd only) symbols ===
+        if any(x in (r1, r2, r3) for x in ["cursed_bizneta", "cursed_clients", "cursed_potion"]):
+            # Big reward but with a price
+            if "cursed_bizneta" in (r1, r2, r3):
+                gain = random.randint(450, 850)
+                state.bizneta += gain
+                # Apply a negative effect to a random business as the "price"
+                if state.businesses:
+                    target = random.choice(list(state.businesses.values()))
+                    curse = Effect(
+                        effect_id="slot_curse",
+                        strength=random.choice([-0.35, -0.50]),
+                        is_permanent=False,
+                        applied_at=datetime.now(timezone.utc),
+                        expires_at=datetime.now(timezone.utc) + timedelta(minutes=random.randint(12, 25))
+                    )
+                    target.effects.append(curse)
+                return SpinResult(r1, r2, r3, f"Twisted fortune! +{gain} Bizneta... but something feels wrong.", bizneta_gained=gain)
+
+            if "cursed_clients" in (r1, r2, r3):
+                gain = random.randint(18, 32)
+                if state.businesses:
+                    target = random.choice(list(state.businesses.values()))
+                    target.clients += gain
+                # Price: lose some Kloneta
+                loss = random.randint(1, 2)
+                state.kloneta = max(0, state.kloneta - loss)
+                return SpinResult(r1, r2, r3, f"Corrupted clients! +{gain} clients... but you lost {loss} Kloneta.", clients_gained=gain)
+
+            if "cursed_potion" in (r1, r2, r3):
+                # Get a good potion but also a negative effect somewhere
+                pot = random.choice(["10min", "30min"])
+                state.regular_potions[pot] = state.regular_potions.get(pot, 0) + 1
+                if state.businesses:
+                    target = random.choice(list(state.businesses.values()))
+                    curse = Effect(
+                        effect_id="slot_curse",
+                        strength=-0.40,
+                        is_permanent=False,
+                        applied_at=datetime.now(timezone.utc),
+                        expires_at=datetime.now(timezone.utc) + timedelta(minutes=20)
+                    )
+                    target.effects.append(curse)
+                return SpinResult(r1, r2, r3, f"Twisted potion... Got a {pot} potion, but chaos touched one of your businesses.", is_rare=True)
 
         # === Regular potion drops ===
         potion_map = {
