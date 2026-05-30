@@ -68,6 +68,8 @@ class ConsoleApp:
             self._print_shop()
         elif command.startswith("buy "):
             self._handle_buy_business(command)
+        elif command in ("spin", "slot", "🎰"):
+            self._handle_spin()
         else:
             print("Unknown command. Type 'help'.")
 
@@ -240,6 +242,20 @@ class ConsoleApp:
         print(f"Bought {name} for {cost} Бизнет!")
         self._print_status()
 
+    def _handle_spin(self):
+        result = self.game.spin_slot()
+        if result is None:
+            print("Not enough Kloneta to spin!")
+            return
+
+        print(f"\n🎰  {result.reel1}  |  {result.reel2}  |  {result.reel3}")
+        print(result.message)
+
+        if result.bizneta_gained or result.clients_gained:
+            print(f"   (+{result.bizneta_gained} Bizneta, +{result.clients_gained} clients)")
+
+        self._print_status()
+
     def _print_status(self):
         state = self.game.state
         now = datetime.now(timezone.utc)
@@ -306,6 +322,7 @@ Available commands:
   potions, p, inv        - Show potion inventory
   use <type>             - Use a potion (e.g. use 10min, use permanent, use suppression)
   shop, buy              - Open shop to buy new businesses
+  spin, slot, 🎰         - Spin the slot machine (costs 1 Kloneta)
   save, sv               - Force manual save
   reset, rst             - Full reset to factory state (with confirmation)
   tick, t                - Force a game tick (autosave check)

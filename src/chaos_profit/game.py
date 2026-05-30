@@ -15,6 +15,7 @@ from .systems.save_system import SaveSystem
 from .systems.effect_system import EffectSystem
 from .systems.time_system import TimeSystem
 from .systems.deal_system import DealSystem
+from .systems.slot_system import SlotSystem, SpinResult
 
 
 class Game:
@@ -27,6 +28,7 @@ class Game:
         self.effect_system = EffectSystem()
         self.time_system = TimeSystem(self.effect_system)
         self.deal_system = DealSystem()
+        self.slot_system = SlotSystem()
         self._last_autosave = datetime.now(timezone.utc)
 
     def save(self) -> None:
@@ -118,3 +120,10 @@ class Game:
         if not self.state.chaos_suppression_until:
             return False
         return datetime.now(timezone.utc) < self.state.chaos_suppression_until
+
+    def spin_slot(self) -> Optional[SpinResult]:
+        """Spin the slot machine. Returns SpinResult or None if not enough Kloneta."""
+        if not self.slot_system.can_spin(self.state):
+            return None
+        result = self.slot_system.spin(self.state)
+        return result

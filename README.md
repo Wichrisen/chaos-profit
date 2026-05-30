@@ -28,6 +28,7 @@ python -m src.chaos_profit.ui_console.console_app
 - `potions` / `p` — инвентарь зелий
 - `use <тип>` — использовать зелье (например: use 10min, use permanent, use suppression)
 - `shop` / `buy` — открыть магазин и купить новый бизнес
+- `spin` / `slot` / 🎰 — крутить слот-машину (стоит 1 Клонету)
 - `save`, `reset`, `help`, `quit`
 
 Это временный инструмент для ручного тестирования механик.
