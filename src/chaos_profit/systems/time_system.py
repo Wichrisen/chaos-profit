@@ -77,10 +77,14 @@ class TimeSystem:
             base_gain = business.base_client_gain_per_minute or 1.0
             client_multiplier = effective_gain / base_gain if base_gain > 0 else 1.0
 
+            # Apply Efficiency upgrade
+            efficiency_mult = business.get_bizneta_per_client_multiplier_from_upgrades()
+
             income = (
                 business.clients
                 * business.bizneta_per_client_per_minute
                 * client_multiplier
+                * efficiency_mult
                 * minutes
             )
             total_income += income
@@ -97,6 +101,11 @@ class TimeSystem:
 
         for business in state.businesses.values():
             effective_gain = self.effect_system.get_effective_client_gain_per_minute(business, chaos_pressure=chaos_pressure)
+
+            # Apply business upgrades (Growth)
+            upgrade_multiplier = business.get_client_gain_multiplier_from_upgrades()
+            effective_gain *= upgrade_multiplier
+
             delta = effective_gain * minutes
 
             business.clients += delta

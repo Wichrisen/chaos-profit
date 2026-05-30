@@ -30,12 +30,16 @@ class EffectSystem:
             return base
 
         multiplier = 1.0
+        resilience = business.get_resilience_multiplier()
+
         for effect in business.effects:
             strength = effect.strength
 
             # Only negative effects (debuffs) are made worse by high Ratysurd
             if strength < 0:
                 strength *= chaos_pressure
+                # Resilience reduces the impact of negative effects on this business
+                strength *= resilience
 
             multiplier *= (1.0 + strength)
 

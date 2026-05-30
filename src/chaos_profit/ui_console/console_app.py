@@ -70,6 +70,10 @@ class ConsoleApp:
             self._handle_buy_business(command)
         elif command in ("spin", "slot", "🎰"):
             self._handle_spin()
+        elif command in ("upgrades", "up"):
+            self._print_upgrades()
+        elif command.startswith("upgrade "):
+            self._handle_upgrade(command)
         else:
             print("Unknown command. Type 'help'.")
 
@@ -243,6 +247,61 @@ class ConsoleApp:
         print(f"Bought {name} for {cost} Бизнет!")
         self._print_status()
 
+    def _print_upgrades(self):
+        state = self.game.state
+        print("\n=== Business Upgrades ===")
+        if not state.businesses:
+            print("No businesses yet.")
+            return
+
+        for i, (niche_id, biz) in enumerate(state.businesses.items(), 1):
+            print(f"\n{i}. {niche_id}")
+            for up_type in ["growth", "efficiency", "resilience"]:
+                level = biz.upgrades.get(up_type, 0)
+                cost = self._get_upgrade_cost(level)
+                print(f"   {up_type:12} | Level {level} | Next cost: {cost} Бизнет")
+
+    def _get_upgrade_cost(self, current_level: int) -> int:
+        base = 800
+        return int(base * (1.6 ** current_level))
+
+    def _handle_upgrade(self, command: str):
+        parts = command.split()
+        if len(parts) < 3:
+            print("Usage: upgrade <business_number> <growth|efficiency|resilience>")
+            return
+
+        try:
+            index = int(parts[1]) - 1
+        except ValueError:
+            print("Invalid business number.")
+            return
+
+        up_type = parts[2].lower()
+        if up_type not in ["growth", "efficiency", "resilience"]:
+            print("Invalid upgrade type. Use: growth, efficiency, or resilience")
+            return
+
+        businesses_list = list(self.game.state.businesses.items())
+        if index < 0 or index >= len(businesses_list):
+            print("Invalid business number.")
+            return
+
+        niche_id, business = businesses_list[index]
+        current_level = business.upgrades.get(up_type, 0)
+        cost = self._get_upgrade_cost(current_level)
+
+        if self.game.state.bizneta < cost:
+            print(f"Not enough Bizneta. Need {cost}, you have {self.game.state.bizneta:.0f}.")
+            return
+
+        # Apply upgrade
+        self.game.state.bizneta -= cost
+        business.upgrades[up_type] = current_level + 1
+
+        print(f"Upgraded {niche_id} - {up_type} to level {current_level + 1} for {cost} Бизнет!")
+        self._print_status()
+
     def _handle_spin(self):
         result = self.game.spin_slot()
         if result is None:
@@ -285,7 +344,12 @@ class ConsoleApp:
                 bizneta_per_min = biz.clients * biz.bizneta_per_client_per_minute * (effective_gain / biz.base_client_gain_per_minute if biz.base_client_gain_per_minute > 0 else 1.0)
                 total_bizneta_per_min += bizneta_per_min
 
-                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min | Bizneta: {bizneta_per_min:6.2f}/min")
+                upgrade_str = ""
+                if biz.upgrades:
+                    upgrades_display = ", ".join([f"{k[:3].upper()}{v}" for k, v in biz.upgrades.items()])
+                    upgrade_str = f" | Upgrades: {upgrades_display}"
+
+                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min | Bizneta: {bizneta_per_min:6.2f}/min{upgrade_str}")
 
                 if biz.effects:
                     print("      Active effects:")
@@ -323,6 +387,8 @@ Available commands:
   potions, p, inv        - Show potion inventory
   use <type>             - Use a potion (e.g. use 10min, use permanent, use suppression)
   shop, buy              - Open shop to buy new businesses
+  upgrades, up           - View upgrade levels and costs for your businesses
+  upgrade <num> <type>   - Upgrade a business (growth / efficiency / resilience)
   spin, slot, 🎰         - Spin the slot machine (costs 1 Kloneta)
   save, sv               - Force manual save
   reset, rst             - Full reset to factory state (with confirmation)

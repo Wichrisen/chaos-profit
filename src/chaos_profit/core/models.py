@@ -46,6 +46,29 @@ class Business:
     # Total income = clients * bizneta_per_client_per_minute * effect_multipliers
     bizneta_per_client_per_minute: float = 0.15  # Default: 0.15 Bizneta per client per minute
 
+    # Upgrades for this business (simple MVP system)
+    # Possible keys: "growth", "efficiency", "resilience"
+    # Each level gives a permanent bonus to this business only.
+    upgrades: Dict[str, int] = field(default_factory=dict)
+
+    def get_client_gain_multiplier_from_upgrades(self) -> float:
+        """Returns multiplier from upgrades (e.g. 1.15 for level 1 Growth)."""
+        level = self.upgrades.get("growth", 0)
+        return 1.0 + level * 0.15
+
+    def get_bizneta_per_client_multiplier_from_upgrades(self) -> float:
+        """Returns multiplier from upgrades for bizneta income."""
+        level = self.upgrades.get("efficiency", 0)
+        return 1.0 + level * 0.12
+
+    def get_resilience_multiplier(self) -> float:
+        """
+        Returns a multiplier that reduces negative effect strength.
+        Level 1 Resilience → negative effects are 10% weaker on this business.
+        """
+        level = self.upgrades.get("resilience", 0)
+        return 1.0 - level * 0.10  # Makes negative effects less severe
+
 
 @dataclass
 class PlayerState:
