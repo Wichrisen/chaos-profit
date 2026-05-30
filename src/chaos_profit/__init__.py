@@ -1,2 +1,5 @@
-"""Chaos & Profit - core game package."""
-__version__ = "0.0.1"
+"""
+Chaos & Profit - Core Game Package
+"""
+
+__version__ = "0.1.0"
