@@ -41,7 +41,10 @@ class Business:
     # Base values without effects.
     # These are recalculated when Ratysurd level changes.
     base_client_gain_per_minute: float = 0.0
-    base_bizneta_per_minute: float = 0.0   # Direct Bizneta income per minute from this business
+
+    # How much Bizneta this business earns per client per minute (base).
+    # Total income = clients * bizneta_per_client_per_minute * effect_multipliers
+    bizneta_per_client_per_minute: float = 0.15  # Default: 0.15 Bizneta per client per minute
 
 
 @dataclass

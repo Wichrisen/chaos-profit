@@ -208,15 +208,18 @@ class ConsoleApp:
         # Create a new business instance
         from src.chaos_profit.core.models import Business
 
-        # Simple base values per tier (can be tuned later)
-        tier_multipliers = {"A": 1.0, "B": 1.35, "C": 1.75}
-        base_gain = 10 * tier_multipliers[tier]
+        # Base values per tier
+        tier_client_gain = {"A": 10.0, "B": 13.5, "C": 17.5}
+        tier_bizneta_per_client = {"A": 0.18, "B": 0.15, "C": 0.12}  # Tier C grows fast but earns less per client
+
+        base_client_gain = tier_client_gain[tier]
+        bizneta_per_client = tier_bizneta_per_client[tier]
 
         new_business = Business(
             niche_id=name.lower().replace(" ", "_").replace("-", "_"),
             clients=0.0,
-            base_client_gain_per_minute=base_gain,
-            base_bizneta_per_minute=base_gain * 0.25,  # rough relationship for prototype
+            base_client_gain_per_minute=base_client_gain,
+            bizneta_per_client_per_minute=bizneta_per_client,
         )
 
         self.game.state.bizneta -= cost
@@ -245,9 +248,14 @@ class ConsoleApp:
 
         if state.businesses:
             print("BUSINESSES:")
+            total_bizneta_per_min = 0.0
+
             for niche_id, biz in state.businesses.items():
                 effective_gain = self.game.effect_system.get_effective_client_gain_per_minute(biz)
-                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min")
+                bizneta_per_min = biz.clients * biz.bizneta_per_client_per_minute * (effective_gain / biz.base_client_gain_per_minute if biz.base_client_gain_per_minute > 0 else 1.0)
+                total_bizneta_per_min += bizneta_per_min
+
+                print(f"  • {niche_id:20} | Clients: {biz.clients:7.2f} | Gain: {effective_gain:6.2f}/min | Bizneta: {bizneta_per_min:6.2f}/min")
 
                 if biz.effects:
                     print("      Active effects:")
@@ -262,6 +270,8 @@ class ConsoleApp:
                             else:
                                 time_str = "temporary"
                         print(f"        - {eff.effect_id}: {strength_pct:+d}% to clients ({time_str})")
+
+            print(f"\n  Total estimated Bizneta income: {total_bizneta_per_min:.2f} / min")
         else:
             print("No businesses owned yet.")
 

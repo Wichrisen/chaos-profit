@@ -62,6 +62,7 @@ class TimeSystem:
             state.kloneta_last_regen_at += timedelta(seconds=used_time)
 
     def _apply_bizneta_income(self, state: PlayerState, seconds: float) -> None:
+        """Income now comes primarily from clients."""
         if not state.businesses:
             return
 
@@ -69,11 +70,26 @@ class TimeSystem:
         total_income = 0.0
 
         for business in state.businesses.values():
-            income = business.base_bizneta_per_minute * minutes
+            if business.clients <= 0:
+                continue
+
+            # Get how much the effects are currently multiplying client-related stats
+            effective_gain = self.effect_system.get_effective_client_gain_per_minute(business)
+            base_gain = business.base_client_gain_per_minute or 1.0
+            client_multiplier = effective_gain / base_gain if base_gain > 0 else 1.0
+
+            # Bizneta income = clients * rate_per_client * effect_multiplier
+            income = (
+                business.clients
+                * business.bizneta_per_client_per_minute
+                * client_multiplier
+                * minutes
+            )
             total_income += income
 
         if total_income > 0:
             state.bizneta += total_income
+            # We can print it from Game level if we want visibility
 
     def _apply_client_changes(self, state: PlayerState, seconds: float) -> None:
         if not state.businesses:

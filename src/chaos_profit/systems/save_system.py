@@ -95,7 +95,7 @@ class SaveSystem:
             "clients": business.clients,
             "effects": [self._serialize_effect(e) for e in business.effects],
             "base_client_gain_per_minute": business.base_client_gain_per_minute,
-            "base_bizneta_per_minute": business.base_bizneta_per_minute,
+            "bizneta_per_client_per_minute": business.bizneta_per_client_per_minute,
         }
 
     def _serialize_effect(self, effect: Effect) -> dict:
@@ -127,7 +127,7 @@ class SaveSystem:
                 clients=biz_data.get("clients", 0.0),
                 effects=effects,
                 base_client_gain_per_minute=biz_data.get("base_client_gain_per_minute", 0.0),
-                base_bizneta_per_minute=biz_data.get("base_bizneta_per_minute", 0.0),
+                bizneta_per_client_per_minute=biz_data.get("bizneta_per_client_per_minute", 0.15),
             )
 
         state = PlayerState(

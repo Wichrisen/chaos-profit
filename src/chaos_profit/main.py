@@ -34,8 +34,8 @@ def main():
     test_business = Business(
         niche_id="test_business",
         clients=100.0,
-        base_bizneta_per_minute=3.0,
-        base_client_gain_per_minute=20.0,   # Base 20 clients per minute
+        base_client_gain_per_minute=20.0,
+        bizneta_per_client_per_minute=0.15,
     )
 
     # Apply a strong temporary negative effect (-60% client gain for 30 minutes)
