@@ -27,6 +27,7 @@ python -m src.chaos_profit.ui_console.console_app
 - `accept` / `refuse` — принять или отказаться от сделки
 - `potions` / `p` — инвентарь зелий
 - `use <тип>` — использовать зелье (например: use 10min, use permanent, use suppression)
+- `shop` / `buy` — открыть магазин и купить новый бизнес
 - `save`, `reset`, `help`, `quit`
 
 Это временный инструмент для ручного тестирования механик.

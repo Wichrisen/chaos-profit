@@ -64,6 +64,10 @@ class ConsoleApp:
             self._print_potions()
         elif command.startswith("use "):
             self._handle_use_potion(command)
+        elif command in ("shop", "buy", "b"):
+            self._print_shop()
+        elif command.startswith("buy "):
+            self._handle_buy_business(command)
         else:
             print("Unknown command. Type 'help'.")
 
@@ -149,6 +153,78 @@ class ConsoleApp:
         else:
             print("You don't have that potion.")
 
+    # ------------------------------------------------------------------
+    # Shop / Buying businesses
+    # ------------------------------------------------------------------
+
+    BUSINESSES = [
+        ("Полуночная Булочная", "A"),
+        ("Бюро Незавершённых Дел", "A"),
+        ("Эхо-Бар", "B"),
+        ("Второе Я", "B"),
+        ("Агентство Шёпот", "C"),
+        ("Разлом-Экспресс", "C"),
+        ("Рынок Никогда", "C"),
+    ]
+
+    def _get_next_business_cost(self) -> int:
+        """Each new business costs 20% more than the previous one."""
+        base_cost = 1000
+        owned = len(self.game.state.businesses)
+        return int(base_cost * (1.2 ** owned))
+
+    def _print_shop(self):
+        cost = self._get_next_business_cost()
+        print(f"\n=== Shop ===")
+        print(f"Next business cost: {cost} Бизнет")
+        print("Available niches:")
+        for i, (name, tier) in enumerate(self.BUSINESSES, 1):
+            print(f"  {i}. {name} (Tier {tier})")
+        print("\nUse: buy <number>  (e.g. buy 3)")
+
+    def _handle_buy_business(self, command: str):
+        parts = command.split()
+        if len(parts) < 2:
+            print("Usage: buy <number>")
+            return
+
+        try:
+            index = int(parts[1]) - 1
+        except ValueError:
+            print("Please enter a valid number.")
+            return
+
+        if index < 0 or index >= len(self.BUSINESSES):
+            print("Invalid business number.")
+            return
+
+        name, tier = self.BUSINESSES[index]
+        cost = self._get_next_business_cost()
+
+        if self.game.state.bizneta < cost:
+            print(f"Not enough Bizneta. Need {cost}, have {self.game.state.bizneta:.0f}.")
+            return
+
+        # Create a new business instance
+        from src.chaos_profit.core.models import Business
+
+        # Simple base values per tier (can be tuned later)
+        tier_multipliers = {"A": 1.0, "B": 1.35, "C": 1.75}
+        base_gain = 10 * tier_multipliers[tier]
+
+        new_business = Business(
+            niche_id=name.lower().replace(" ", "_").replace("-", "_"),
+            clients=0.0,
+            base_client_gain_per_minute=base_gain,
+            base_bizneta_per_minute=base_gain * 0.25,  # rough relationship for prototype
+        )
+
+        self.game.state.bizneta -= cost
+        self.game.state.businesses[new_business.niche_id] = new_business
+
+        print(f"Bought {name} for {cost} Бизнет!")
+        self._print_status()
+
     def _print_status(self):
         state = self.game.state
         now = datetime.now(timezone.utc)
@@ -206,6 +282,7 @@ Available commands:
   accept / refuse        - Accept or refuse the current deal
   potions, p, inv        - Show potion inventory
   use <type>             - Use a potion (e.g. use 10min, use permanent, use suppression)
+  shop, buy              - Open shop to buy new businesses
   save, sv               - Force manual save
   reset, rst             - Full reset to factory state (with confirmation)
   tick, t                - Force a game tick (autosave check)
