@@ -129,6 +129,18 @@ class ConsoleApp:
         print(f"Chaos Suppression: {state.chaos_suppression_potions}")
         print("Use with: use 2min / use 10min / use permanent / use suppression")
 
+    def _get_ratysurd_pressure_text(self, level: int) -> str:
+        if level <= 3:
+            return "Calm"
+        elif level <= 6:
+            return "Rising"
+        elif level <= 9:
+            return "High"
+        elif level <= 12:
+            return "Dangerous"
+        else:
+            return "Extreme"
+
     def _handle_use_potion(self, command: str):
         parts = command.split(maxsplit=1)
         if len(parts) < 2:
@@ -233,7 +245,8 @@ class ConsoleApp:
         now = datetime.now(timezone.utc)
 
         print("\n" + "=" * 50)
-        print(f"RATYSURD LEVEL: {state.ratysurd_level}")
+        pressure = self._get_ratysurd_pressure_text(state.ratysurd_level)
+        print(f"RATYSURD LEVEL: {state.ratysurd_level}   [{pressure}]")
         print("-" * 50)
         print(f"Kloneta: {state.kloneta}/5")
         print(f"Bizneta: {state.bizneta:,.2f}")
@@ -285,7 +298,7 @@ class ConsoleApp:
     def _print_help(self):
         print("""
 Available commands:
-  status, s, st          - Show current game state
+  status, s, st          - Show current game state (includes Ratysurd pressure)
   advance <minutes>, a   - Advance time (e.g. 'advance 60' or 'a 30')
   1m, 5m, 10m, 30m, 1h, 2h - Quick time advance
   deals, d               - Show current deal (if any)

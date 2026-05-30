@@ -112,13 +112,23 @@ class DealSystem:
             # Failure → apply negative effect
             deal_type = "Тёмная" if deal.is_dark else "Обычная"
 
-            # Determine effect strength (tuned stronger for prototype testing)
+            # Determine effect strength — scales with Ratysurd (especially after level 7)
+            ratysurd = state.ratysurd_level
+
             if deal.is_dark:
-                strength = random.choice([-0.55, -0.70, -0.85])  # Strong
-                is_permanent = random.random() < 0.45
+                base_strength = random.choice([-0.50, -0.65, -0.75])
+                is_permanent = random.random() < 0.40
             else:
-                strength = random.choice([-0.30, -0.45, -0.55])  # Noticeable
-                is_permanent = random.random() < 0.15
+                base_strength = random.choice([-0.25, -0.40, -0.50])
+                is_permanent = random.random() < 0.12
+
+            # Scaling: after level 6 the danger grows noticeably
+            if ratysurd > 6:
+                scaling = 1.0 + (ratysurd - 6) * 0.08   # +8% strength per level after 6
+                base_strength *= scaling
+
+            # Clamp so it doesn't become completely ridiculous in prototype
+            strength = max(base_strength, -0.92)  # max ~92% penalty for now
 
             effect = Effect(
                 effect_id="deal_failure",
