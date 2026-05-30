@@ -19,16 +19,19 @@ def main():
     print(f"  Businesses     : {len(game.state.businesses)}")
     print(f"  Last played    : {game.state.last_played_at}")
 
-    # Simulate some progress
+    # Simulate some progress + lower Kloneta to demonstrate regen
     game.state.bizneta += 150
-    game.state.kloneta = min(5, game.state.kloneta + 1)
+    game.state.kloneta = 2   # Artificially lower it for demo
 
     print(f"\nAfter some fake progress:")
     print(f"  Bizneta now    : {game.state.bizneta:.2f}")
+    print(f"  Kloneta now    : {game.state.kloneta}")
 
-    # Demonstrate time advancement (foundation for future systems)
-    game.advance_time(45)      # 45 seconds
-    game.advance_time(3600)    # 1 hour (offline simulation example)
+    # Demonstrate time advancement
+    print("\n--- Time Advancement Demo ---")
+    game.advance_time(45)           # 45 seconds → should do nothing
+    game.advance_time(600)          # 10 minutes → should regen 1 Kloneta
+    game.advance_time(25 * 60)      # 25 minutes → should regen 2 more (capped at 5)
 
     # Trigger manual save
     game.save()

@@ -9,7 +9,7 @@ Design principles:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict
 
 
@@ -51,13 +51,13 @@ class PlayerState:
     This is the only object that gets saved/loaded.
     """
     version: int = 1
-    last_played_at: datetime = field(default_factory=datetime.utcnow)
+    last_played_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     ratysurd_level: int = 1
 
     # Resources
     kloneta: int = 5
-    kloneta_last_regen_at: datetime = field(default_factory=datetime.utcnow)
+    kloneta_last_regen_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     bizneta: float = 0.0
 
     # All businesses the player currently owns.
@@ -77,9 +77,12 @@ class PlayerState:
     @classmethod
     def new_game(cls) -> "PlayerState":
         """Factory method for a completely fresh game state."""
+        now = datetime.now(timezone.utc)
         return cls(
             ratysurd_level=1,
             kloneta=5,
+            kloneta_last_regen_at=now,
+            last_played_at=now,
             bizneta=0.0,
             businesses={},
             regular_potions={},
