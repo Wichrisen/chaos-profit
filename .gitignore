@@ -118,3 +118,9 @@ htmlcov/
 # Temporary audio conversion artifacts
 *.wav.bak
 *.ogg.bak
+
+# --------------------
+# Personal / Tools
+# --------------------
+# Scripts and tools that are not part of the distributed game
+tools/
