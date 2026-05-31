@@ -6,9 +6,8 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/status-in%20development-orange.svg)]()
 
-**⚠️ Игра в активной разработке.** Pygame-версия находится в приоритете. Консольная версия используется в основном для тестирования механик.
+> **Примечание:** Активная разработка Pygame-версии игры приостановлена. В настоящее время ведётся работа над веб-версией проекта.
 
 ## Особенности
 
@@ -20,28 +19,26 @@
 
 ## Как запустить
 
-### Основная версия (Pygame)
+### Pygame-версия
 
 ```bash
 python -m src.chaos_profit.ui_pygame
 ```
 
-### Консольная версия (для тестирования и баланса)
+### Консольная версия
 
 ```bash
 python -m src.chaos_profit.ui_console.console_app
 ```
 
-> **Примечание:** Консольная версия — это вспомогательный инструмент. Основной игровой опыт сейчас в Pygame-версии.
+> **Примечание:** Консольная версия создавалась в основном для тестирования механик и баланса.
 
 ## Установка
 
 ```bash
-# Клонировать репозиторий
 git clone https://github.com/Wichrisen/chaos-profit.git
 cd chaos-profit
 
-# Рекомендуется создать виртуальное окружение
 python3 -m venv .venv
 source .venv/bin/activate   # macOS / Linux
 # .venv\Scripts\activate    # Windows
@@ -49,32 +46,11 @@ source .venv/bin/activate   # macOS / Linux
 pip install -r requirements.txt
 ```
 
-> **Примечание:** Полноценная playable-версия находится в активной разработке.
-
 ## Структура проекта
 
 - `src/chaos_profit/core/` — игровая механика и логика
-- `src/chaos_profit/ui_pygame/` — основная версия игры (Pygame)
-- `src/chaos_profit/ui_console/` — консольная версия для тестирования
+- `src/chaos_profit/ui_pygame/` — Pygame-версия
+- `src/chaos_profit/ui_console/` — консольная версия
 - `assets/` — изображения и звуки
 - `packaging/` — конфигурация сборки (PyInstaller)
-
-## Цели первой версии
-
-- Полноценный цикл: слот → бизнесы → сделки → рост хаоса
-- Система Рейтисурда с заметным влиянием на геймплей
-- Сохранения и оффлайн-прогресс
-- Стабильная Pygame-версия
-
-## Разработка
-
-Проект активно развивается.
-
-## Участие
-
-Мы приветствуем вклад от сообщества.  
-Пожалуйста, ознакомьтесь с [Code of Conduct](CODE_OF_CONDUCT.md) перед участием.
-
----
-
-*Сделано с любовью к странным экономическим симуляторам.*
+```
