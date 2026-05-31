@@ -124,3 +124,6 @@ htmlcov/
 # --------------------
 # Scripts and tools that are not part of the distributed game
 tools/
+
+# Local AI / development notes (not for public repo)
+RECENTLY_MOVES.md
