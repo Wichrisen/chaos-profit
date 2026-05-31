@@ -5,21 +5,28 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create GitHub Release (instead of draft)'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022   # Pinned for stability (avoids sudden runner changes)
     permissions:
-      contents: write   # Required to create GitHub Releases
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -27,33 +34,42 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build executable with PyInstaller
-        run: |
-          pyinstaller packaging/chaos_profit.spec
+      - name: Build executable
+        run: pyinstaller packaging/chaos_profit.spec
 
-      - name: Prepare artifact
+      - name: Prepare artifacts
         id: prepare
         shell: bash
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="manual-${{ github.sha }}"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           mv dist "ChaosProfit-$VERSION"
 
-      - name: Upload build artifact
+          # Create portable ZIP
+          7z a -tzip "ChaosProfit-$VERSION-portable.zip" "./ChaosProfit-$VERSION/*"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ChaosProfit-${{ steps.prepare.outputs.version }}
-          path: ChaosProfit-${{ steps.prepare.outputs.version }}/
+          path: |
+            ChaosProfit-${{ steps.prepare.outputs.version }}/
+            ChaosProfit-${{ steps.prepare.outputs.version }}-portable.zip
           retention-days: 30
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          draft: ${{ github.event.inputs.create_release != 'true' }}
           prerelease: false
           generate_release_notes: true
           files: |
-            ChaosProfit-${{ steps.prepare.outputs.version }}/*
+            ChaosProfit-${{ steps.prepare.outputs.version }}/
+            ChaosProfit-${{ steps.prepare.outputs.version }}-portable.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
