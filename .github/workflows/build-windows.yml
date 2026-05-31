@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:   # Allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   build:
@@ -29,9 +29,29 @@ jobs:
         run: |
           pyinstaller packaging/chaos_profit.spec
 
+      - name: Prepare artifact
+        id: prepare
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          mv dist "ChaosProfit-$VERSION"
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ChaosProfit-Windows
-          path: dist/
+          name: ChaosProfit-${{ steps.prepare.outputs.version }}
+          path: ChaosProfit-${{ steps.prepare.outputs.version }}/
           retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            ChaosProfit-${{ steps.prepare.outputs.version }}/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
