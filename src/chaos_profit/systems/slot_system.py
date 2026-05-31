@@ -1,13 +1,21 @@
 """
-SlotSystem — basic implementation of the slot machine for the prototype.
+SlotSystem — the emotional heart of Chaos & Profit.
 
-Current goals (MVP scope):
-- Costs 1 Kloneta per spin.
-- Can drop businesses (determined by middle reel).
-- Can drop regular and rare potions.
-- Gives Bizneta and clients on regular wins.
-- Feels exciting even in text form.
-- Easy to expand later with better symbols, weights, and special features.
+MVP scope (95% complete for console → GUI transfer):
+- 1 Kloneta per spin.
+- Business drops on middle reel (with 30% "slot discount" flavor via compensation on dups).
+- 3 potion types + 2 rare god-tier (Permanent Cleanse, Chaos Suppression).
+- Full Ratysurd-reactive personality:
+  * Animation speed + header changes at 10+ / 12+.
+  * 40% Chaotic Spins at 10+ that corrupt one reel.
+  * Corrupted symbols with creepy displays and mixed/poisoned outcomes.
+  * "Reality Fracture" and "Haunted Venture" high-chaos exclusives (permanent scars + upside).
+  * Tone of messages, borders, and misses shifts dramatically with chaos.
+- Duplicate businesses handled with escalating flavor (and risk at 12+).
+- Designed to feel *different* and dangerous at high Ratysurd, not just "more random".
+- All outcomes feed directly into PlayerState (effects, resources, new businesses).
+
+Ready for GUI port (visual reels, sound cues, better animations can layer on top).
 """
 
 import random
@@ -52,6 +60,21 @@ SYMBOLS = [
 
 # Map symbol_id → nice display name for results
 SYMBOL_DISPLAY = {s[0]: s[1] for s in SYMBOLS}
+
+# Corrupted / twisted variants (only appear via high Ratysurd Chaotic Spins)
+CORRUPTED_DISPLAY = {
+    "cursed_bizneta": "💀 Cursed Bizneta",
+    "cursed_clients": "🩸 Twisted Clients",
+    "cursed_potion": "☠️ Poisoned Flask",
+}
+
+def get_symbol_display(sym: str) -> str:
+    """Unified display resolver that handles both normal and corrupted symbols."""
+    if sym in SYMBOL_DISPLAY:
+        return SYMBOL_DISPLAY[sym]
+    if sym in CORRUPTED_DISPLAY:
+        return CORRUPTED_DISPLAY[sym]
+    return sym
 
 # Business symbol_id → nice name (for buying)
 BUSINESS_SYMBOL_MAP = {
@@ -106,34 +129,52 @@ class SlotSystem:
         is_high_chaos = ratysurd >= 10
 
         if is_very_high:
-            print("\n◉◉◉  REALITY IS FRACTURING...  ◉◉◉", end=" ", flush=True)
+            print("\n◉◉◉  THE VEIL IS TEARING  ◉◉◉", end=" ", flush=True)
         elif is_high_chaos:
             print("\n🌪️  The reels twist and scream...", end=" ", flush=True)
         else:
             print("\n🎰  Spinning the reels...", end=" ", flush=True)
 
-        # Stage 1 — more erratic at high chaos
+        # Stage 1 — more erratic at high chaos (glitchy corrupted symbols at 12+)
         for _ in range(8 if is_very_high else 7):
-            temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
+            pool = list(SYMBOL_DISPLAY.keys())
+            if is_very_high and random.random() < 0.35:
+                pool = pool + list(CORRUPTED_DISPLAY.keys())
+            temp1 = random.choice(pool)
+            temp2 = random.choice(pool)
+            temp3 = random.choice(pool)
+            d1 = get_symbol_display(temp1)
+            d2 = get_symbol_display(temp2)
+            d3 = get_symbol_display(temp3)
+            print(f"\r🎰  {d1:<18} | {d2:<18} | {d3:<18}", end="", flush=True)
             time.sleep(0.025 if is_very_high else 0.03 if is_high_chaos else 0.04)
 
         # Stage 2
         for _ in range(7 if is_very_high else 6):
-            temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
+            pool = list(SYMBOL_DISPLAY.keys())
+            if is_very_high and random.random() < 0.3:
+                pool = pool + list(CORRUPTED_DISPLAY.keys())
+            temp1 = random.choice(pool)
+            temp2 = random.choice(pool)
+            temp3 = random.choice(pool)
+            d1 = get_symbol_display(temp1)
+            d2 = get_symbol_display(temp2)
+            d3 = get_symbol_display(temp3)
+            print(f"\r🎰  {d1:<18} | {d2:<18} | {d3:<18}", end="", flush=True)
             time.sleep(0.06 if is_very_high else 0.07 if is_high_chaos else 0.085)
 
         # Stage 3 — final tension (much slower and heavier at high chaos)
         for _ in range(5 if is_very_high else 4):
-            temp1 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp2 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            temp3 = random.choice(list(SYMBOL_DISPLAY.keys()))
-            print(f"\r🎰  {SYMBOL_DISPLAY[temp1]:<18} | {SYMBOL_DISPLAY[temp2]:<18} | {SYMBOL_DISPLAY[temp3]:<18}", end="", flush=True)
+            pool = list(SYMBOL_DISPLAY.keys())
+            if is_very_high and random.random() < 0.45:
+                pool = pool + list(CORRUPTED_DISPLAY.keys())
+            temp1 = random.choice(pool)
+            temp2 = random.choice(pool)
+            temp3 = random.choice(pool)
+            d1 = get_symbol_display(temp1)
+            d2 = get_symbol_display(temp2)
+            d3 = get_symbol_display(temp3)
+            print(f"\r🎰  {d1:<18} | {d2:<18} | {d3:<18}", end="", flush=True)
             time.sleep(0.25 if is_very_high else 0.18 if is_high_chaos else 0.22)
 
         print("\r", end="")
@@ -162,16 +203,25 @@ class SlotSystem:
         if is_chaotic_spin:
             result.message = "CHAOTIC SPIN! " + result.message
 
-        result.reel1 = SYMBOL_DISPLAY.get(reel1, reel1)
-        result.reel2 = SYMBOL_DISPLAY.get(reel2, reel2)
-        result.reel3 = SYMBOL_DISPLAY.get(reel3, reel3)
+        result.reel1 = get_symbol_display(reel1)
+        result.reel2 = get_symbol_display(reel2)
+        result.reel3 = get_symbol_display(reel3)
 
-        # Dramatic result
-        if result.is_rare or result.business_gained:
-            print(f"\n🎰  {result.reel1}  |  {result.reel2}  |  {result.reel3}")
-            print("★" * 40)
+        # Dramatic result — tone shifts hard with chaos
+        is_very_high = ratysurd >= 12
+        has_cursed = any(x in (reel1, reel2, reel3) for x in ("cursed_bizneta", "cursed_clients", "cursed_potion"))
+
+        if has_cursed or is_chaotic_spin:
+            print(f"\n◉  {result.reel1}  |  {result.reel2}  |  {result.reel3}")
+            print("▓" * 52)
             print(f"  {result.message}")
-            print("★" * 40)
+            print("▓" * 52)
+        elif result.is_rare or result.business_gained:
+            border = "◈" * 52 if is_very_high else "★" * 50
+            print(f"\n🎰  {result.reel1}  |  {result.reel2}  |  {result.reel3}")
+            print(border)
+            print(f"  {result.message}")
+            print(border)
         else:
             print(f"\n🎰  {result.reel1}  |  {result.reel2}  |  {result.reel3}")
             print(f"   → {result.message}")
@@ -214,6 +264,8 @@ class SlotSystem:
         if r2 in self.business_pool:
             niche_name, tier = BUSINESS_SYMBOL_MAP[r2]
             business_id = r2.replace("business_", "")
+            ratysurd = state.ratysurd_level
+            is_very_high = ratysurd >= 12
 
             if business_id not in state.businesses:
                 tier_client = {"A": 10.0, "B": 13.5, "C": 17.5}
@@ -225,19 +277,54 @@ class SlotSystem:
                     base_client_gain_per_minute=tier_client[tier],
                     bizneta_per_client_per_minute=tier_biz[tier],
                 )
+
+                # === High chaos twist: Haunted / Fractured business (risk/reward) ===
+                haunted = False
+                if is_very_high and random.random() < 0.35:
+                    haunted = True
+                    # Starts "wrong" — permanent mild scar but faster growth potential
+                    scar = Effect(
+                        effect_id="haunted_venture",
+                        strength=-0.28,
+                        is_permanent=True,
+                        applied_at=datetime.now(timezone.utc),
+                    )
+                    new_biz.effects.append(scar)
+                    # Compensate with hidden upside (higher base for this instance)
+                    new_biz.bizneta_per_client_per_minute *= 1.25
+
                 state.businesses[business_id] = new_biz
 
-                messages = [
-                    f"★ NEW BUSINESS UNLOCKED! {niche_name} (Tier {tier})! ★",
-                    f"INCREDIBLE! You pulled {niche_name}!",
-                    f"THE REELS HAVE SPOKEN! New business: {niche_name}!"
-                ]
-                return SpinResult(r1, r2, r3, random.choice(messages), business_gained=business_id, is_rare=True)
+                if haunted:
+                    msg = f"★ YOU PULLED {niche_name}... BUT IT'S WRONG. IT HUNGERS. (Permanent scar +25% income potential) ★"
+                else:
+                    messages = [
+                        f"★ NEW BUSINESS UNLOCKED! {niche_name} (Tier {tier})! ★",
+                        f"INCREDIBLE! You pulled {niche_name}!",
+                        f"THE REELS HAVE SPOKEN! New business: {niche_name}!"
+                    ]
+                    msg = random.choice(messages)
+                return SpinResult(r1, r2, r3, msg, business_gained=business_id, is_rare=True)
 
             else:
                 bonus = random.randint(1800, 2800) if tier == "C" else random.randint(1200, 1800)
-                state.bizneta += bonus
-                return SpinResult(r1, r2, r3, f"Duplicate {niche_name}... +{bonus} Bizneta compensation.", bizneta_gained=bonus)
+                # High chaos duplicate: sometimes the memory bites back
+                if is_very_high and random.random() < 0.4:
+                    state.bizneta += bonus
+                    if state.businesses:
+                        target = random.choice(list(state.businesses.values()))
+                        bite = Effect(
+                            effect_id="echoing_memory",
+                            strength=random.choice([-0.35, -0.45]),
+                            is_permanent=False,
+                            applied_at=datetime.now(timezone.utc),
+                            expires_at=datetime.now(timezone.utc) + timedelta(minutes=22)
+                        )
+                        target.effects.append(bite)
+                    return SpinResult(r1, r2, r3, f"The reels remember {niche_name}... +{bonus} Bizneta, but the echo left a mark.", bizneta_gained=bonus)
+                else:
+                    state.bizneta += bonus
+                    return SpinResult(r1, r2, r3, f"Duplicate {niche_name}... +{bonus} Bizneta compensation.", bizneta_gained=bonus)
 
         # === Rare / God-tier drops ===
         if r1 in self.rare_pool or r3 in self.rare_pool:
@@ -251,12 +338,30 @@ class SlotSystem:
         # === Corrupted / Twisted outcomes (high Ratysurd only) ===
         if any(x in (r1, r2, r3) for x in ["cursed_bizneta", "cursed_clients", "cursed_potion"]):
             roll = random.random()
+            ratysurd = state.ratysurd_level
 
             if "cursed_bizneta" in (r1, r2, r3):
                 gain = random.randint(520, 980)
                 state.bizneta += gain
+
+                # === New high-chaos special: Reality Fracture (ratysurd 12+) ===
+                if ratysurd >= 12 and random.random() < 0.28:
+                    huge = random.randint(1400, 2400)
+                    state.bizneta += huge
+                    if state.businesses:
+                        # Permanent scar on 1-2 businesses
+                        affected = random.sample(list(state.businesses.values()), min(2, len(state.businesses)))
+                        for target in affected:
+                            scar = Effect(
+                                effect_id="reality_scar",
+                                strength=random.choice([-0.55, -0.70]),
+                                is_permanent=True,
+                                applied_at=datetime.now(timezone.utc),
+                            )
+                            target.effects.append(scar)
+                    return SpinResult(r1, r2, r3, f"REALITY FRACTURE! +{gain+huge} Bizneta... but the world now has permanent cracks on your empire.", bizneta_gained=gain+huge, is_rare=True)
+
                 if state.businesses and roll < 0.65:
-                    # Stronger version: apply to multiple businesses
                     affected = random.sample(list(state.businesses.values()), min(2, len(state.businesses)))
                     for target in affected:
                         curse = Effect(

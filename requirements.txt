@@ -1,6 +1,9 @@
 # Core
 pygame>=2.6.0
 
+# UI
+pygame-gui>=0.6.0   # Used in hybrid mode (core game stays on raw pygame)
+
 # Console prototype (optional but highly recommended for nice UI during early development)
 rich>=13.0.0
 

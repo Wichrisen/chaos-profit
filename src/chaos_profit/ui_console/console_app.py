@@ -112,8 +112,16 @@ class ConsoleApp:
     def _handle_deals(self):
         info = self.game.deal_system.get_current_deal_info()
         if info:
-            print(f"\nАктивная сделка: {info}")
-            print("Напиши 'accept' / 'yes' чтобы принять или 'refuse' / 'no' чтобы отказаться.")
+            state = self.game.state
+            is_danger = state.ratysurd_level >= 10 or "ИСКАЖЁННАЯ" in info
+            border = "▓" * 54 if is_danger else "─" * 50
+            print(f"\n{border}")
+            print(f"  АКТИВНАЯ СДЕЛКА: {info}")
+            if state.ratysurd_level >= 11:
+                print("  Мир внимательно наблюдает за твоим выбором.")
+            print(f"{border}")
+            print("  accept / yes  — взять на себя риск")
+            print("  refuse / no   — отвергнуть (иногда безопаснее)")
         else:
             print("Сейчас нет активных сделок.")
 
@@ -176,14 +184,15 @@ class ConsoleApp:
     # Shop / Buying businesses
     # ------------------------------------------------------------------
 
+    # Canonical mapping to match SlotSystem BUSINESS_SYMBOL_MAP keys (for consistent niche_id)
     BUSINESSES = [
-        ("Полуночная Булочная", "A"),
-        ("Бюро Незавершённых Дел", "A"),
-        ("Эхо-Бар", "B"),
-        ("Второе Я", "B"),
-        ("Агентство Шёпот", "C"),
-        ("Разлом-Экспресс", "C"),
-        ("Рынок Никогда", "C"),
+        ("Полуночная Булочная", "bakery", "A"),
+        ("Бюро Незавершённых Дел", "debts", "A"),
+        ("Эхо-Бар", "echo", "B"),
+        ("Второе Я", "second", "B"),
+        ("Агентство Шёпот", "whisper", "C"),
+        ("Разлом-Экспресс", "razlom", "C"),
+        ("Рынок Никогда", "never", "C"),
     ]
 
     def _get_next_business_cost(self) -> int:
@@ -197,7 +206,7 @@ class ConsoleApp:
         print(f"\n=== Shop ===")
         print(f"Next business cost: {cost} Бизнет")
         print("Available niches:")
-        for i, (name, tier) in enumerate(self.BUSINESSES, 1):
+        for i, (name, niche_id, tier) in enumerate(self.BUSINESSES, 1):
             print(f"  {i}. {name} (Tier {tier})")
         print("\nUse: buy <number>  (e.g. buy 3)")
 
@@ -217,14 +226,14 @@ class ConsoleApp:
             print("Invalid business number.")
             return
 
-        name, tier = self.BUSINESSES[index]
+        name, niche_id, tier = self.BUSINESSES[index]
         cost = self._get_next_business_cost()
 
         if self.game.state.bizneta < cost:
             print(f"Not enough Bizneta. Need {cost}, have {self.game.state.bizneta:.0f}.")
             return
 
-        # Create a new business instance
+        # Create a new business instance (using canonical niche_id to match slot drops)
         from src.chaos_profit.core.models import Business
 
         # Base values per tier
@@ -235,7 +244,7 @@ class ConsoleApp:
         bizneta_per_client = tier_bizneta_per_client[tier]
 
         new_business = Business(
-            niche_id=name.lower().replace(" ", "_").replace("-", "_"),
+            niche_id=niche_id,
             clients=0.0,
             base_client_gain_per_minute=base_client_gain,
             bizneta_per_client_per_minute=bizneta_per_client,
@@ -310,18 +319,29 @@ class ConsoleApp:
 
         # The SlotSystem prints the reels + main message with appropriate drama.
         # High-chaos results get much more intense framing.
+        is_very_high = self.game.state.ratysurd_level >= 12
         is_high_chaos = self.game.state.ratysurd_level >= 10
         is_big = result.business_gained or result.is_rare or ((result.bizneta_gained or 0) + (result.clients_gained or 0) >= 35)
+        msg_lower = result.message.lower()
 
-        if "CHAOTIC SPIN" in result.message or "cursed" in result.message.lower() or "twisted" in result.message.lower():
+        if "reality fracture" in msg_lower or "haunted" in msg_lower or "fracture" in msg_lower:
+            print("◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈")
+            print("   → Something fundamental just broke. The cost will be paid in blood and clients.")
+            print("◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈◈")
+        elif "CHAOTIC SPIN" in result.message or "cursed" in msg_lower or "twisted" in msg_lower or "echoing" in msg_lower:
             print("▓" * 58)
             print("   → The chaos itself reached into the reels. This spin was wrong.")
+            if is_very_high:
+                print("   → You feel watched.")
             print("▓" * 58)
         elif result.business_gained or result.is_rare:
-            border = "◆" * 52 if is_high_chaos else "★" * 50
+            border = "◈" * 52 if is_very_high else "◆" * 52 if is_high_chaos else "★" * 50
             print(border)
             if result.business_gained:
-                print("   → A new business has joined your empire. This changes things.")
+                if "WRONG" in result.message or "HUNGERS" in result.message.upper():
+                    print("   → You gained a business. It is already looking back at you.")
+                else:
+                    print("   → A new business has joined your empire. This changes things.")
             else:
                 print("   → This one could shift the entire run.")
             print(border)
@@ -333,7 +353,9 @@ class ConsoleApp:
         elif result.bizneta_gained or result.clients_gained:
             print("   → It adds up.")
         else:
-            if self.game.state.ratysurd_level >= 11:
+            if self.game.state.ratysurd_level >= 12:
+                print("   → The reels no longer pretend to be fair.")
+            elif self.game.state.ratysurd_level >= 11:
                 print("   → The chaos devoured this spin completely...")
             elif self.game.state.ratysurd_level >= 8:
                 print("   → Cold, empty reels. The pressure is suffocating.")
@@ -356,6 +378,12 @@ class ConsoleApp:
         print(f"Last played: {state.last_played_at.strftime('%Y-%m-%d %H:%M:%S')} UTC")
         print(f"Time since last action: {(now - state.last_played_at).total_seconds() / 60:.1f} min")
         print(f"Total time played: {state.total_time_advanced / 60:.1f} min")
+        if state.triggered_milestones:
+            big_scars = [m for m in sorted(state.triggered_milestones) if m in (7, 10, 13, 15)]
+            if big_scars:
+                print(f"World scars: {', '.join(f'L{l}' for l in big_scars)}")
+            else:
+                print(f"Ratysurd milestones passed: {len(state.triggered_milestones)}")
 
         # Show active global suppression
         if state.chaos_suppression_until and now < state.chaos_suppression_until:

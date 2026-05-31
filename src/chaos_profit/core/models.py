@@ -107,6 +107,10 @@ class PlayerState:
     # Progression tracking
     total_time_advanced: float = 0.0  # Total seconds the player has advanced time (for Ratysurd growth)
 
+    # One-time world escalation milestones that have already fired
+    # (e.g. 7, 10, 13). Used to apply permanent "the world broke here" changes.
+    triggered_milestones: List[int] = field(default_factory=list)
+
     @classmethod
     def new_game(cls) -> "PlayerState":
         """Factory method for a completely fresh game state."""
@@ -116,11 +120,12 @@ class PlayerState:
             kloneta=5,
             kloneta_last_regen_at=now,
             last_played_at=now,
-            bizneta=0.0,
+            bizneta=1000.0,  # Starting capital for new players (onboarding)
             businesses={},
             regular_potions={},
             permanent_cleanse_potions=0,
             chaos_suppression_potions=0,
             chaos_suppression_until=None,
             total_time_advanced=0.0,
+            triggered_milestones=[],
         )

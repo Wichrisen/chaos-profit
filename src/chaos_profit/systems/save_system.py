@@ -48,6 +48,16 @@ class SaveSystem:
         data = json.loads(self.save_path.read_text(encoding="utf-8"))
         state = self._deserialize(data)
 
+        # === Migration: Give starting capital to very old saves ===
+        # Helps players who created their save before we added 1000 starting Bizneta.
+        if state.bizneta <= 0 and len(state.businesses) == 0:
+            state.bizneta = 1000.0
+            # Reset timestamps to avoid giving massive offline progress or instant Kloneta
+            now = datetime.now(timezone.utc)
+            state.last_played_at = now
+            state.kloneta_last_regen_at = now
+            print("[SaveSystem] Migration: Gave 1000 starting Bizneta to old save.")
+
         # Calculate offline progress
         now = datetime.now(timezone.utc)
         seconds_passed = (now - state.last_played_at).total_seconds()
@@ -87,6 +97,7 @@ class SaveSystem:
             "total_bizneta_earned": state.total_bizneta_earned,
             "chaos_suppression_until": state.chaos_suppression_until.isoformat() if state.chaos_suppression_until else None,
             "total_time_advanced": state.total_time_advanced,
+            "triggered_milestones": state.triggered_milestones,
         }
         return data
 
@@ -148,6 +159,7 @@ class SaveSystem:
             total_bizneta_earned=data.get("total_bizneta_earned", 0.0),
             chaos_suppression_until=datetime.fromisoformat(data["chaos_suppression_until"]) if data.get("chaos_suppression_until") else None,
             total_time_advanced=data.get("total_time_advanced", 0.0),
+            triggered_milestones=data.get("triggered_milestones", []),
         )
         return state
 

@@ -40,15 +40,23 @@ class TimeSystem:
     # ------------------------------------------------------------------
 
     def _apply_kloneta_regen(self, state: PlayerState, seconds: float) -> None:
+        """
+        Regenerates Kloneta based on real wall time (not game speed).
+        1 Kloneta every 5 real minutes, up to maximum of 5.
+        """
         from datetime import timedelta
 
-        REGEN_INTERVAL = 10 * 60  # 10 minutes
+        REGEN_INTERVAL = 5 * 60   # 5 minutes (as per original design)
         MAX_KLONETA = 5
 
         if state.kloneta >= MAX_KLONETA:
+            # Do not touch the timestamp while at max.
+            # This way, if the player stays at 5/5 for a long time and then spends some,
+            # they will get regeneration soon after (correct behavior).
             return
 
-        time_since_last = (datetime.now(timezone.utc) - state.kloneta_last_regen_at).total_seconds() + seconds
+        now = datetime.now(timezone.utc)
+        time_since_last = (now - state.kloneta_last_regen_at).total_seconds()
 
         if time_since_last < REGEN_INTERVAL:
             return
