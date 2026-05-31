@@ -1,4 +1,10 @@
+# =============================================================================
+# Chaos & Profit - Python / Pygame Project .gitignore
+# =============================================================================
+
+# --------------------
 # Python
+# --------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -21,21 +27,28 @@ wheels/
 *.egg
 MANIFEST
 
+# --------------------
 # Virtual environments
+# --------------------
+.venv/
 venv/
 ENV/
 env/
-.venv/
 .conda/
+.conda-env/
 
-# IDE / editors
+# --------------------
+# IDE / Editors
+# --------------------
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
+# --------------------
 # macOS
+# --------------------
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -53,31 +66,55 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-# Pygame / game specific
-*.log
+# --------------------
+# Windows
+# --------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --------------------
+# Game specific
+# --------------------
+# Player saves (never commit these)
 saves/
 *.sav
-*.pkl
+*.save
 
-# Testing
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*~
+.#*
+
+# PyInstaller build artifacts (we keep the .spec file, but not build outputs)
+*.spec.bak
+build/
+dist/
+
+# --------------------
+# Testing & Coverage
+# --------------------
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
 .nox/
+.mypy_cache/
+.ruff_cache/
 
-# Build / packaging
-*.spec
-dist/
-build/
+# --------------------
+# Packaging / Release
+# --------------------
+# We usually keep the main .spec file under version control
+# Only ignore backup spec files
+*.spec~
 
-# OS generated
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Temporary / debug
-*.tmp
-*.bak
-*~ 
-.#*
+# --------------------
+# Other
+# --------------------
+# Temporary audio conversion artifacts
+*.wav.bak
+*.ogg.bak
